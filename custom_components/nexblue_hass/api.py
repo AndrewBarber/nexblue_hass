@@ -40,7 +40,11 @@ class NexBlueApiClient:
         """Login to NexBlue API and get auth token."""
         _LOGGER.debug("Logging in to NexBlue API")
 
-        login_data = {"username": self._username, "password": self._password}
+        login_data = {
+            "username": self._username, 
+            "password": self._password,
+            "account_type": 0
+        }
 
         response = await self.api_wrapper("post", LOGIN_URL, data=login_data)
 
