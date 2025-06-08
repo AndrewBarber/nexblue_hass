@@ -1,4 +1,5 @@
 """Switch platform for NexBlue EV Chargers."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -24,7 +25,9 @@ async def async_setup_entry(
     # Check if we have any chargers in the data
     if "chargers" in coordinator.data:
         for charger in coordinator.data["chargers"]:
-            switches.append(NexBlueChargingSwitch(coordinator, entry, charger["serial_number"]))
+            switches.append(
+                NexBlueChargingSwitch(coordinator, entry, charger["serial_number"])
+            )
 
     if switches:
         async_add_entities(switches)
@@ -71,17 +74,16 @@ class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
         if not charger_data or "status" not in charger_data:
             return False
 
-        # Check if the charger is in charging state
-        # This will need to be adjusted based on the actual API response structure
+        # Check if the charger is in charging state (2 = charging according to API spec)
         status = charger_data.get("status", {})
-        return status.get("charging_status") == "charging"
+        return status.get("charging_state") == 2
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on (start charging)."""
-        result = await self.coordinator.api.async_start_charging(self._charger_serial)
+        await self.coordinator.api.async_start_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off (stop charging)."""
-        result = await self.coordinator.api.async_stop_charging(self._charger_serial)
+        await self.coordinator.api.async_stop_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()

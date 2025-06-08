@@ -1,4 +1,5 @@
 """Sensor platform for NexBlue EV Chargers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -30,7 +31,27 @@ class NexBlueSensorEntityDescription(SensorEntityDescription):
     value_fn: callable[[dict], StateType] = None
 
 
+# Mapping of charging state values to human-readable strings
+CHARGING_STATE_MAP = {
+    0: "Idle",
+    1: "Connected",
+    2: "Charging",
+    3: "Finished",
+    4: "Error",
+    5: "Load Balancing",
+    6: "Delayed",
+    7: "EV Waiting",
+}
+
 SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
+    NexBlueSensorEntityDescription(
+        key="charging_state",
+        name="Charging State",
+        icon="mdi:ev-station",
+        value_fn=lambda data: CHARGING_STATE_MAP.get(
+            data.get("status", {}).get("charging_state"), "Unknown"
+        ),
+    ),
     NexBlueSensorEntityDescription(
         key="power",
         name="Power",
@@ -128,7 +149,9 @@ class NexBlueSensor(NexBlueEntity, SensorEntity):
         super().__init__(coordinator, config_entry)
         self.entity_description = description
         self._charger_serial = charger_serial
-        self._attr_unique_id = f"{config_entry.entry_id}_{charger_serial}_{description.key}"
+        self._attr_unique_id = (
+            f"{config_entry.entry_id}_{charger_serial}_{description.key}"
+        )
         charger_name = self._get_charger_name()
         self._attr_name = f"{charger_name} {description.name}"
 

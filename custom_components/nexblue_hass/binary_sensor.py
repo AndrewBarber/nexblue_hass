@@ -1,4 +1,5 @@
 """Binary sensor platform for NexBlue EV Chargers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -43,8 +44,7 @@ BINARY_SENSOR_TYPES: tuple[NexBlueBinarySensorEntityDescription, ...] = (
         key="charging",
         name="Charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
-        is_on_fn=lambda data: data.get("status", {}).get("charging_status")
-        == "charging",
+        is_on_fn=lambda data: data.get("status", {}).get("charging_state") == 2,
     ),
     NexBlueBinarySensorEntityDescription(
         key="error",
@@ -90,7 +90,9 @@ class NexBlueBinarySensor(NexBlueEntity, BinarySensorEntity):
         super().__init__(coordinator, config_entry)
         self.entity_description = description
         self._charger_serial = charger_serial
-        self._attr_unique_id = f"{config_entry.entry_id}_{charger_serial}_{description.key}"
+        self._attr_unique_id = (
+            f"{config_entry.entry_id}_{charger_serial}_{description.key}"
+        )
         charger_name = self._get_charger_name()
         self._attr_name = f"{charger_name} {description.name}"
 
