@@ -125,26 +125,42 @@ class NexBlueApiClient:
         try:
             # Get list of chargers
             chargers_data = await self.api_wrapper("get", CHARGERS_URL)
+            
+            # Add detailed debug logging to see the actual response
+            _LOGGER.debug("Chargers API response: %s", chargers_data)
 
-            if not chargers_data or "chargers" not in chargers_data:
+            if not chargers_data:
+                _LOGGER.error("No charger data received from NexBlue API")
+                return {}
+                
+            # The API returns a 'data' key with an array of chargers instead of 'chargers'
+            if "data" not in chargers_data:
                 _LOGGER.error(
-                    "No charger data received from NexBlue API or invalid response format"
+                    "Invalid response format from NexBlue API. Expected 'data' key, got: %s",
+                    list(chargers_data.keys()) if isinstance(chargers_data, dict) else type(chargers_data)
                 )
                 return {}
 
             # For each charger, get detailed status
             result = {"chargers": []}
 
-            for charger in chargers_data.get("chargers", []):
-                charger_id = charger.get("id")
-                if charger_id:
+            for charger in chargers_data.get("data", []):
+                charger_serial = charger.get("serial_number")
+                if charger_serial:
                     # Get detailed status for this charger
-                    status_url = f"{CHARGERS_URL}/{charger_id}/cmd/status"
-                    status_data = await self.api_wrapper("get", status_url)
-
-                    if status_data:
-                        # Combine basic charger info with status data
-                        charger_info = {**charger, "status": status_data}
+                    detail_url = f"{CHARGERS_URL}/{charger_serial}"
+                    detail_data = await self.api_wrapper("get", detail_url)
+                    
+                    if detail_data:
+                        # Get status data
+                        status_url = f"{CHARGERS_URL}/{charger_serial}/cmd/status"
+                        status_data = await self.api_wrapper("get", status_url)
+                        
+                        # Combine charger details with status data
+                        charger_info = {**detail_data}
+                        if status_data:
+                            charger_info["status"] = status_data
+                        
                         result["chargers"].append(charger_info)
 
             return result
@@ -153,22 +169,23 @@ class NexBlueApiClient:
             _LOGGER.error("Error fetching data from NexBlue API: %s", ex)
             return {}
 
-    async def async_start_charging(self, charger_id: str) -> bool:
-        """Start a charging session for a specific charger."""
+    async def async_start_charging(self, charger_serial: str) -> bool:
+        """Start charging for a specific charger."""
         # Ensure we have a valid token before making API calls
         if not await self.async_ensure_token_valid():
             _LOGGER.error("Failed to authenticate with NexBlue API")
             return False
 
         try:
-            start_url = f"{CHARGERS_URL}/{charger_id}/cmd/start_charging"
+            # Send start charging command
+            start_url = f"{CHARGERS_URL}/{charger_serial}/cmd/start_charging"
             response = await self.api_wrapper("post", start_url)
 
             # According to API spec, response contains a result field with status code
             # 0 = success, other values indicate different error conditions
             if response and response.get("result", -1) == 0:
                 _LOGGER.info(
-                    "Successfully started charging session for charger %s", charger_id
+                    "Successfully started charging for charger %s", charger_serial
                 )
                 return True
             else:
@@ -179,7 +196,7 @@ class NexBlueApiClient:
             _LOGGER.error("Error starting charging session: %s", ex)
             return False
 
-    async def async_stop_charging(self, charger_id: str) -> bool:
+    async def async_stop_charging(self, charger_serial: str) -> bool:
         """Stop a charging session for a specific charger."""
         # Ensure we have a valid token before making API calls
         if not await self.async_ensure_token_valid():
@@ -187,14 +204,14 @@ class NexBlueApiClient:
             return False
 
         try:
-            stop_url = f"{CHARGERS_URL}/{charger_id}/cmd/stop_charging"
+            stop_url = f"{CHARGERS_URL}/{charger_serial}/cmd/stop_charging"
             response = await self.api_wrapper("post", stop_url)
 
             # According to API spec, response contains a result field with status code
-            # 0 = success, other values indicate different error conditions
+            # 0 means success
             if response and response.get("result", -1) == 0:
                 _LOGGER.info(
-                    "Successfully stopped charging session for charger %s", charger_id
+                    "Successfully stopped charging session for charger %s", charger_serial
                 )
                 return True
             else:
