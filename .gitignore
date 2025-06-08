@@ -37,3 +37,6 @@ Thumbs.db
 
 # Cookiecutter files
 .cookiecutter.json
+
+# Debug
+debug/*

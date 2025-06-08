@@ -105,13 +105,13 @@ async def async_setup_entry(
     # Check if we have any chargers in the data
     if "chargers" in coordinator.data:
         for charger in coordinator.data["chargers"]:
-            charger_id = charger["id"]
+            charger_serial = charger["serial_number"]
             for description in SENSOR_TYPES:
                 entities.append(
                     NexBlueSensor(
                         coordinator=coordinator,
                         config_entry=entry,
-                        charger_id=charger_id,
+                        charger_serial=charger_serial,
                         description=description,
                     )
                 )
@@ -123,27 +123,27 @@ async def async_setup_entry(
 class NexBlueSensor(NexBlueEntity, SensorEntity):
     """NexBlue sensor class."""
 
-    def __init__(self, coordinator, config_entry, charger_id, description):
+    def __init__(self, coordinator, config_entry, charger_serial, description):
         """Initialize the sensor."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description
-        self._charger_id = charger_id
-        self._attr_unique_id = f"{config_entry.entry_id}_{charger_id}_{description.key}"
+        self._charger_serial = charger_serial
+        self._attr_unique_id = f"{config_entry.entry_id}_{charger_serial}_{description.key}"
         charger_name = self._get_charger_name()
         self._attr_name = f"{charger_name} {description.name}"
 
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
         for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("id") == self._charger_id:
-                # Try to get a friendly name, fall back to ID if not available
-                return charger.get("name", f"Charger {self._charger_id}")
-        return f"Charger {self._charger_id}"
+            if charger.get("serial_number") == self._charger_serial:
+                # Try to get a friendly name, fall back to serial number if not available
+                return charger.get("product_name", f"Charger {self._charger_serial}")
+        return f"Charger {self._charger_serial}"
 
     def _get_charger_data(self) -> dict[str, Any]:
         """Get the data for this specific charger."""
         for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("id") == self._charger_id:
+            if charger.get("serial_number") == self._charger_serial:
                 return charger
         return {}
 
@@ -151,7 +151,7 @@ class NexBlueSensor(NexBlueEntity, SensorEntity):
     def device_info(self) -> DeviceInfo:
         """Return device information about this NexBlue charger."""
         return DeviceInfo(
-            identifiers={(DOMAIN, self._charger_id)},
+            identifiers={(DOMAIN, self._charger_serial)},
             name=f"NexBlue {self._get_charger_name()}",
             manufacturer="NexBlue",
             model=self._get_charger_data().get("model", "EV Charger"),

@@ -24,7 +24,7 @@ async def async_setup_entry(
     # Check if we have any chargers in the data
     if "chargers" in coordinator.data:
         for charger in coordinator.data["chargers"]:
-            switches.append(NexBlueChargingSwitch(coordinator, entry, charger["id"]))
+            switches.append(NexBlueChargingSwitch(coordinator, entry, charger["serial_number"]))
 
     if switches:
         async_add_entities(switches)
@@ -33,26 +33,26 @@ async def async_setup_entry(
 class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
     """Switch to control NexBlue EV charger charging state."""
 
-    def __init__(self, coordinator, config_entry, charger_id):
+    def __init__(self, coordinator, config_entry, charger_serial):
         """Initialize the switch."""
         super().__init__(coordinator, config_entry)
-        self._charger_id = charger_id
+        self._charger_serial = charger_serial
         self._attr_name = f"NexBlue {self._get_charger_name()} Charging"
-        self._attr_unique_id = f"{config_entry.entry_id}_{charger_id}_charging"
+        self._attr_unique_id = f"{config_entry.entry_id}_{charger_serial}_charging"
         self._attr_icon = "mdi:ev-station"
 
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
         for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("id") == self._charger_id:
-                # Try to get a friendly name, fall back to ID if not available
-                return charger.get("name", f"Charger {self._charger_id}")
-        return f"Charger {self._charger_id}"
+            if charger.get("serial_number") == self._charger_serial:
+                # Try to get a friendly name, fall back to serial number if not available
+                return charger.get("product_name", f"Charger {self._charger_serial}")
+        return f"Charger {self._charger_serial}"
 
     def _get_charger_data(self) -> dict[str, Any]:
         """Get the data for this specific charger."""
         for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("id") == self._charger_id:
+            if charger.get("serial_number") == self._charger_serial:
                 return charger
         return {}
 
@@ -60,7 +60,7 @@ class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
     def device_info(self) -> DeviceInfo:
         """Return device information about this NexBlue charger."""
         return DeviceInfo(
-            identifiers={(DOMAIN, self._charger_id)},
+            identifiers={(DOMAIN, self._charger_serial)},
             name=f"NexBlue {self._get_charger_name()}",
             manufacturer="NexBlue",
             model=self._get_charger_data().get("model", "EV Charger"),
@@ -80,11 +80,11 @@ class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
         return status.get("charging_status") == "charging"
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Start charging."""
-        await self.coordinator.api.async_start_charging(self._charger_id)
+        """Turn the switch on (start charging)."""
+        result = await self.coordinator.client.async_start_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Stop charging."""
-        await self.coordinator.api.async_stop_charging(self._charger_id)
+        """Turn the switch off (stop charging)."""
+        result = await self.coordinator.client.async_stop_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()
