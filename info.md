@@ -43,6 +43,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
 [buymecoffee]: https://www.buymeacoffee.com/ludeeus
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
+
 [commits-shield]: https://img.shields.io/github/commit-activity/y/AndrewBarber/NexBlue Home Assistant Integration.svg?style=for-the-badge
 [commits]: https://github.com/AndrewBarber/NexBlue Home Assistant Integration/commits/main
 [hacs]: https://hacs.xyz

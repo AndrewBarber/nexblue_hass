@@ -8,7 +8,7 @@
 [![Project Maintenance][maintenance-shield]][user_profile]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-## 🌟 Welcome to the NexBlue Integration! 
+## 🌟 Welcome to the NexBlue Integration!
 
 > 🚨 **Disclaimer:** I'm not a Python developer! This project is built with enthusiasm and a lot of trial and error. Expect some "vibe coding" along the way! 😅
 
@@ -18,11 +18,11 @@ This unofficial integration connects your [NexBlue](https://nexblue.com/) EV cha
 
 **This integration sets up the following platforms:**
 
-| Platform | Description |
-| --- | --- |
-| `binary_sensor` | 🟢 Show charger connection status and charging state |
-| `sensor` | 📊 Display charging data, energy usage, and other metrics |
-| `switch` | 🔌 Control charging (start/stop) |
+| Platform        | Description                                               |
+| --------------- | --------------------------------------------------------- |
+| `binary_sensor` | 🟢 Show charger connection status and charging state      |
+| `sensor`        | 📊 Display charging data, energy usage, and other metrics |
+| `switch`        | 🔌 Control charging (start/stop)                          |
 
 ![example][exampleimg]
 
@@ -55,7 +55,7 @@ This unofficial integration connects your [NexBlue](https://nexblue.com/) EV cha
 
 ## ⚙️ Setup
 
-1. In the Home Assistant UI go to "Configuration" → "Integrations" 
+1. In the Home Assistant UI go to "Configuration" → "Integrations"
 2. Click "+" and search for "NexBlue"
 3. Enter your NexBlue account credentials (the same ones you use for the NexBlue app)
 
@@ -86,19 +86,15 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 ---
 
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
-
 [buymecoffee]: https://www.buymeacoffee.com/andrewbarber
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [commits]: https://github.com/AndrewBarber/nexblue_hass/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-
 [exampleimg]: example.png
-
 [license-shield]: https://img.shields.io/github/license/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40AndrewBarber-blue.svg?style=for-the-badge
-
 [releases-shield]: https://img.shields.io/github/release/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [releases]: https://github.com/AndrewBarber/nexblue_hass/releases
 [user_profile]: https://github.com/AndrewBarber
