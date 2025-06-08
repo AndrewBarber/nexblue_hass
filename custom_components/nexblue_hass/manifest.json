@@ -1,0 +1,10 @@
+{
+  "domain": "nexblue_hass",
+  "name": "NexBlue",
+  "documentation": "https://github.com/AndrewBarber/nexblue_hass",
+  "issue_tracker": "https://github.com/AndrewBarber/nexblue_hass/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": ["@AndrewBarber"],
+  "requirements": []
+}
