@@ -28,30 +28,25 @@ class NexBlueBinarySensorEntityDescription(BinarySensorEntityDescription):
 
 BINARY_SENSOR_TYPES: tuple[NexBlueBinarySensorEntityDescription, ...] = (
     NexBlueBinarySensorEntityDescription(
-        key="connected",
-        name="Connected",
-        device_class=BinarySensorDeviceClass.CONNECTIVITY,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        is_on_fn=lambda data: data.get("status", {}).get("connected", False),
-    ),
-    NexBlueBinarySensorEntityDescription(
-        key="vehicle_connected",
-        name="Vehicle Connected",
-        device_class=BinarySensorDeviceClass.PLUG,
-        is_on_fn=lambda data: data.get("status", {}).get("vehicle_connected", False),
-    ),
-    NexBlueBinarySensorEntityDescription(
         key="charging",
         name="Charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
         is_on_fn=lambda data: data.get("status", {}).get("charging_state") == 2,
     ),
     NexBlueBinarySensorEntityDescription(
+        key="vehicle_connected",
+        name="Vehicle Connected",
+        device_class=BinarySensorDeviceClass.PLUG,
+        is_on_fn=lambda data: data.get("status", {}).get("charging_state")
+        in (1, 2, 3, 5, 6, 7),  # Any state except idle (0) and error (4)
+    ),
+    NexBlueBinarySensorEntityDescription(
         key="error",
         name="Error",
         device_class=BinarySensorDeviceClass.PROBLEM,
         entity_category=EntityCategory.DIAGNOSTIC,
-        is_on_fn=lambda data: data.get("status", {}).get("error_state", False),
+        is_on_fn=lambda data: data.get("status", {}).get("charging_state")
+        == 4,  # 4 = error
     ),
 )
 

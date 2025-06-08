@@ -156,10 +156,24 @@ class NexBlueApiClient:
                     detail_url = f"{CHARGERS_URL}/{charger_serial}"
                     detail_data = await self.api_wrapper("get", detail_url)
 
+                    # Add detailed debug logging for charger details
+                    _LOGGER.debug(
+                        "Charger detail response for %s: %s",
+                        charger_serial,
+                        detail_data,
+                    )
+
                     if detail_data:
                         # Get status data
                         status_url = f"{CHARGERS_URL}/{charger_serial}/cmd/status"
                         status_data = await self.api_wrapper("get", status_url)
+
+                        # Add detailed debug logging for status data
+                        _LOGGER.debug(
+                            "Charger status response for %s: %s",
+                            charger_serial,
+                            status_data,
+                        )
 
                         # Combine charger details with status data
                         charger_info = {**detail_data}

@@ -11,7 +11,6 @@ from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.components.sensor import SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricCurrent
-from homeassistant.const import UnitOfElectricPotential
 from homeassistant.const import UnitOfEnergy
 from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant
@@ -59,7 +58,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:flash",
-        value_fn=lambda data: data.get("status", {}).get("power_kw"),
+        value_fn=lambda data: data.get("status", {}).get("power"),
     ),
     NexBlueSensorEntityDescription(
         key="energy_session",
@@ -68,7 +67,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:lightning-bolt",
-        value_fn=lambda data: data.get("status", {}).get("energy_session_kwh"),
+        value_fn=lambda data: data.get("status", {}).get("energy"),
     ),
     NexBlueSensorEntityDescription(
         key="energy_total",
@@ -77,40 +76,26 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         icon="mdi:lightning-bolt-circle",
-        value_fn=lambda data: data.get("status", {}).get("energy_total_kwh"),
+        value_fn=lambda data: data.get("status", {}).get("lifetime_energy"),
     ),
     NexBlueSensorEntityDescription(
-        key="current",
-        name="Current",
+        key="current_limit",
+        name="Current Limit",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:current-ac",
-        value_fn=lambda data: data.get("status", {}).get("current_a"),
+        value_fn=lambda data: data.get("status", {}).get("current_limit"),
     ),
     NexBlueSensorEntityDescription(
-        key="voltage",
-        name="Voltage",
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
-        state_class=SensorStateClass.MEASUREMENT,
-        icon="mdi:sine-wave",
-        value_fn=lambda data: data.get("status", {}).get("voltage_v"),
-    ),
-    NexBlueSensorEntityDescription(
-        key="status",
-        name="Status",
-        icon="mdi:information-outline",
-        value_fn=lambda data: data.get("status", {}).get("state", "unknown"),
-    ),
-    NexBlueSensorEntityDescription(
-        key="wifi_signal",
-        name="WiFi Signal",
-        device_class=SensorDeviceClass.SIGNAL_STRENGTH,
-        state_class=SensorStateClass.MEASUREMENT,
+        key="network_status",
+        name="Network Status",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:wifi",
-        value_fn=lambda data: data.get("status", {}).get("wifi_signal_strength"),
+        value_fn=lambda data: {0: "None", 1: "WiFi", 2: "LTE"}.get(
+            data.get("status", {}).get("network_status"), "Unknown"
+        ),
     ),
 )
 
