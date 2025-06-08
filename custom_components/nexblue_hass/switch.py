@@ -37,17 +37,14 @@ class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
         """Initialize the switch."""
         super().__init__(coordinator, config_entry)
         self._charger_serial = charger_serial
-        self._attr_name = f"NexBlue {self._get_charger_name()} Charging"
+        self._attr_name = f"{self._get_charger_name()} Charging"
         self._attr_unique_id = f"{config_entry.entry_id}_{charger_serial}_charging"
         self._attr_icon = "mdi:ev-station"
 
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
-        for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("serial_number") == self._charger_serial:
-                # Try to get a friendly name, fall back to serial number if not available
-                return charger.get("product_name", f"Charger {self._charger_serial}")
-        return f"Charger {self._charger_serial}"
+        # Just use the serial number for a cleaner name
+        return f"NexBlue {self._charger_serial}"
 
     def _get_charger_data(self) -> dict[str, Any]:
         """Get the data for this specific charger."""
@@ -81,10 +78,10 @@ class NexBlueChargingSwitch(NexBlueEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on (start charging)."""
-        result = await self.coordinator.client.async_start_charging(self._charger_serial)
+        result = await self.coordinator.api.async_start_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off (stop charging)."""
-        result = await self.coordinator.client.async_stop_charging(self._charger_serial)
+        result = await self.coordinator.api.async_stop_charging(self._charger_serial)
         await self.coordinator.async_request_refresh()

@@ -96,11 +96,8 @@ class NexBlueBinarySensor(NexBlueEntity, BinarySensorEntity):
 
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
-        for charger in self.coordinator.data.get("chargers", []):
-            if charger.get("serial_number") == self._charger_serial:
-                # Try to get a friendly name, fall back to serial number if not available
-                return charger.get("product_name", f"Charger {self._charger_serial}")
-        return f"Charger {self._charger_serial}"
+        # Just use the serial number for a cleaner name
+        return f"NexBlue {self._charger_serial}"
 
     def _get_charger_data(self) -> dict[str, Any]:
         """Get the data for this specific charger."""
@@ -114,7 +111,7 @@ class NexBlueBinarySensor(NexBlueEntity, BinarySensorEntity):
         """Return device information about this NexBlue charger."""
         return DeviceInfo(
             identifiers={(DOMAIN, self._charger_serial)},
-            name=f"NexBlue {self._get_charger_name()}",
+            name=f"{self._get_charger_name()}",
             manufacturer="NexBlue",
             model=self._get_charger_data().get("model", "EV Charger"),
             sw_version=self._get_charger_data().get("firmware_version"),
