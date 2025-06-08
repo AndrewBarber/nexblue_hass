@@ -252,32 +252,31 @@ class NexBlueApiClient:
         if headers is None:
             headers = self._headers.copy() if self._access_token else HEADERS.copy()
 
+        _LOGGER.debug(
+            "API Wrapper - Method: %s, URL: %s, Headers: %s, Data: %s",
+            method,
+            url,
+            headers,
+            data,
+        )
         try:
             async with async_timeout.timeout(TIMEOUT):
-                _LOGGER.debug(
-                    "%s request to %s with data: %s", method.upper(), url, data
-                )
-
+                _LOGGER.debug("Making %s request to %s", method.upper(), url)
                 if method == "get":
                     response = await self._session.get(url, headers=headers)
-
                 elif method == "post":
                     response = await self._session.post(url, headers=headers, json=data)
-
                 elif method == "put":
                     response = await self._session.put(url, headers=headers, json=data)
-
                 elif method == "patch":
                     response = await self._session.patch(
                         url, headers=headers, json=data
                     )
-
                 elif method == "delete":
                     response = await self._session.delete(url, headers=headers)
                 else:
                     _LOGGER.error("Unsupported method: %s", method)
                     return None
-
                 _LOGGER.debug("Response status: %s", response.status)
 
                 if response.status in (200, 201):

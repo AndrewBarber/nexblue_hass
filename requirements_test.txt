@@ -1,2 +1,21 @@
--r requirements_dev.txt
-pytest-homeassistant-custom-component==0.12.49
+# Core testing
+pytest>=8.0.0
+pytest-cov>=6.0.0
+pytest-timeout>=2.3.1
+pytest-homeassistant-custom-component>=0.1.0
+
+# Async support
+pytest-asyncio>=0.20.0
+pytest-aiohttp>=1.0.0
+
+# HTTP mocking
+aiohttp>=3.9.0
+aioresponses>=0.7.3
+
+# Test utilities
+freezegun>=1.2.2
+syrupy>=4.0.0
+
+# Linting
+pylint>=2.17.0
+pylint-homeassistant>=0.1.0

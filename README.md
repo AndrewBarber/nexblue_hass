@@ -126,7 +126,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [commits-shield]: https://img.shields.io/github/commit-activity/y/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [commits]: https://github.com/AndrewBarber/nexblue_hass/commits/main
 [hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
+[hacsbadge]: https://img.shields.io/badge/HACS-Integration-orange.svg?style=for-the-badge
 [exampleimg]: example.png
 [license-shield]: https://img.shields.io/github/license/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40AndrewBarber-blue.svg?style=for-the-badge

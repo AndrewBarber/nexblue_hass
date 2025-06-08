@@ -18,10 +18,31 @@ from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.nexblue_hass.const import SWITCH_ICON
-from tests.fixtures.api_responses import mock_charger_data
 
 # Enable async support for all tests
 pytestmark = pytest.mark.asyncio
+
+
+def create_mock_charger(charging=False, connected=True, serial_number="CHARGER123"):
+    """Create a mock charger with the given state."""
+    return {
+        "serial_number": serial_number,
+        "name": f"Charger {serial_number}",
+        "model": "Test Model",
+        "firmware_version": "1.0.0",
+        "status": {
+            "is_charging": charging,
+            "is_connected": connected,
+            "current_power": 6.5 if charging else 0.0,
+            "current_limit": 32.0,
+            "charging_state": "charging" if charging else "standby",
+            "plug_state": "connected" if connected else "disconnected",
+            "max_charging_current": 32.0,
+            "actual_charging_current": 6.5 if charging else 0.0,
+            "actual_power": 1500.0 if charging else 0.0,
+            "total_energy": 123.45,
+        },
+    }
 
 
 @pytest.mark.asyncio
@@ -32,12 +53,17 @@ async def test_switch_turn_on(
 ) -> None:
     """Test turning the switch on."""
     # Setup test data
-    charger = mock_charger_data(charging=False)
+    charger = create_mock_charger(charging=False)
     serial_number = charger["serial_number"]
     entity_id = f"{SWITCH_DOMAIN}.charger_{serial_number.lower()}"
 
-    # Configure mock API client
-    mock_api_client.async_get_data.return_value = [charger]
+    # Configure mock API client with proper data structure
+    async def mock_get_data():
+        return {"chargers": [charger]}
+
+    mock_api_client.async_get_data.side_effect = mock_get_data
+    mock_api_client.async_start_charging = AsyncMock(return_value=True)
+    mock_api_client.async_get_data.return_value = {"chargers": [charger]}
 
     # Let HA settle
     await hass.async_block_till_done()
@@ -68,7 +94,7 @@ async def test_switch_turn_on(
 
     # Update the mock to reflect the state change
     updated_charger = {**charger, "charging": True}
-    mock_api_client.async_get_data.return_value = [updated_charger]
+    mock_api_client.async_get_data.return_value = {"chargers": [updated_charger]}
 
     # Trigger state refresh
     await hass.services.async_call(
@@ -93,12 +119,12 @@ async def test_switch_turn_off(
 ) -> None:
     """Test turning the switch off."""
     # Setup test data
-    charger = mock_charger_data(charging=True)
+    charger = create_mock_charger(charging=True)
     serial_number = charger["serial_number"]
     entity_id = f"{SWITCH_DOMAIN}.charger_{serial_number.lower()}"
 
-    # Configure mock API client
-    mock_api_client.async_get_data.return_value = [charger]
+    # Configure mock API client with proper data structure
+    mock_api_client.async_get_data.return_value = {"chargers": [charger]}
 
     # Let HA settle
     await hass.async_block_till_done()
@@ -127,7 +153,7 @@ async def test_switch_turn_off(
 
     # Update the mock to reflect the state change
     updated_charger = {**charger, "charging": False}
-    mock_api_client.async_get_data.return_value = [updated_charger]
+    mock_api_client.async_get_data.return_value = {"chargers": [updated_charger]}
 
     # Trigger state refresh
     await hass.services.async_call(
@@ -154,12 +180,12 @@ async def test_switch_unavailable(
 ) -> None:
     """Test switch becomes unavailable when charger is offline."""
     # Setup test data
-    charger = mock_charger_data(connected=False)
+    charger = create_mock_charger(connected=False)
     serial_number = charger["serial_number"]
     entity_id = f"{SWITCH_DOMAIN}.charger_{serial_number.lower()}"
 
-    # Configure mock API client
-    mock_api_client.async_get_data.return_value = [charger]
+    # Configure mock API client with proper data structure
+    mock_api_client.async_get_data.return_value = {"chargers": [charger]}
 
     # Let HA settle
     await hass.async_block_till_done()
@@ -176,16 +202,22 @@ async def test_switch_unavailable(
     mock_api_client.async_start_charging.reset_mock()
     mock_api_client.async_stop_charging.reset_mock()
 
-    # Try to turn on while offline
+    # Try to turn on (should not call the API)
     await hass.services.async_call(
         SWITCH_DOMAIN,
         SERVICE_TURN_ON,
         {ATTR_ENTITY_ID: entity_id},
         blocking=True,
     )
-
-    # Verify no API calls were made
     mock_api_client.async_start_charging.assert_not_called()
+
+    # Try to turn off (should not call the API)
+    await hass.services.async_call(
+        SWITCH_DOMAIN,
+        SERVICE_TURN_OFF,
+        {ATTR_ENTITY_ID: entity_id},
+        blocking=True,
+    )
     mock_api_client.async_stop_charging.assert_not_called()
 
 
@@ -197,11 +229,11 @@ async def test_multiple_chargers(
 ) -> None:
     """Test multiple chargers are handled correctly."""
     # Setup test data with multiple chargers
-    charger1 = mock_charger_data(charging=True, serial_number="CHARGER1")
-    charger2 = mock_charger_data(charging=False, serial_number="CHARGER2")
+    charger1 = create_mock_charger(charging=True, serial_number="CHARGER1")
+    charger2 = create_mock_charger(charging=False, serial_number="CHARGER2")
 
-    # Configure mock API client
-    mock_api_client.async_get_data.return_value = [charger1, charger2]
+    # Configure mock API client with proper data structure
+    mock_api_client.async_get_data.return_value = {"chargers": [charger1, charger2]}
 
     # Let HA settle
     await hass.async_block_till_done()
@@ -238,20 +270,19 @@ async def test_multiple_chargers(
         blocking=True,
     )
 
-    # Verify the API was called with the correct serial number
-    mock_api_client.async_start_charging.assert_called_once_with(
-        charger_to_test["serial_number"]
-    )
+    # Verify the API was called with the correct parameters
+    mock_api_client.async_start_charging.assert_called_once()
+    args, _ = mock_api_client.async_start_charging.call_args
+    assert (
+        args[0] == charger_to_test["serial_number"]
+    ), f"Expected serial number {charger_to_test['serial_number']}, got {args[0]}"
 
-    # Update the mock to reflect the state change
-    updated_charger1 = {**charger1}
-    updated_charger2 = {
-        **charger2,
-        "charging": True,
-    }  # We're testing turning on charger2
-
-    # Update the mock to return the updated chargers
-    mock_api_client.async_get_data.return_value = [updated_charger1, updated_charger2]
+    # Update the mock to reflect the state change for both chargers
+    updated_charger1 = {**charger1, "charging": True}
+    updated_charger2 = {**charger2, "charging": True}
+    mock_api_client.async_get_data.return_value = {
+        "chargers": [updated_charger1, updated_charger2]
+    }
 
     # Trigger state refresh
     await hass.services.async_call(
@@ -260,8 +291,9 @@ async def test_multiple_chargers(
         {ATTR_ENTITY_ID: entity_id},
         blocking=True,
     )
+    await hass.async_block_till_done()
 
     # Verify the state changed to on
     state = hass.states.get(entity_id)
-    assert state is not None
-    assert state.state == STATE_ON
+    assert state is not None, f"State for {entity_id} is None after update"
+    assert state.state == STATE_ON, f"Expected {entity_id} to be on, was {state.state}"

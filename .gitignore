@@ -1,10 +1,13 @@
-# Python cache
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -16,24 +19,138 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual environment
-nexblue_venv/
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
 venv/
 ENV/
+env.bak/
+venv.bak/
+nexblue_venv/
 
-# IDE files
-.idea
-.vscode
-*.swp
-*.swo
+# Spyder project settings
+.spyderproject
+.spyproject
 
-# OS specific files
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Home Assistant specific
+.storage/
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.db-journal
+
+# Custom components
+# Allow access to manifest.json in custom_components
+!custom_components/nexblue_hass/manifest.json
+
+# But ignore other files in custom_components
+custom_components/*/
+!custom_components/nexblue_hass/
+
+# Secrets
+secrets.yaml
+!secrets.yaml.example
+
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Test snapshots
+**/__snapshots__/
 
 # Cookiecutter files
 .cookiecutter.json
@@ -43,3 +160,7 @@ debug/*
 
 # Ruff cache
 .ruff_cache/
+
+# pytest
+pytest_cache/
+.coverage

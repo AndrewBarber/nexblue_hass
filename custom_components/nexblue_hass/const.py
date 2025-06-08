@@ -11,6 +11,7 @@ ISSUE_URL = "https://github.com/AndrewBarber/nexblue_hass/issues"
 
 # Icons
 ICON = "mdi:format-quote-close"
+SWITCH_ICON = "mdi:ev-station"
 
 # Device classes
 BINARY_SENSOR_DEVICE_CLASS = "connectivity"
