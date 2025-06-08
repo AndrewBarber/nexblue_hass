@@ -18,11 +18,34 @@ This unofficial integration connects your [NexBlue](https://nexblue.com/) EV cha
 
 **This integration sets up the following platforms:**
 
-| Platform        | Description                                               |
-| --------------- | --------------------------------------------------------- |
-| `binary_sensor` | 🟢 Show charger connection status and charging state      |
-| `sensor`        | 📊 Display charging data, energy usage, and other metrics |
-| `switch`        | 🔌 Control charging (start/stop)                          |
+| Platform        | Description                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------- |
+| `binary_sensor` | 🟢 Show charger connection status, vehicle connection, charging state, and error status        |
+| `sensor`        | 📊 Display power, energy (session & total), current, voltage, status, and WiFi signal strength |
+| `switch`        | 🔌 Control charging (start/stop)                                                               |
+
+### Detailed Entity Information
+
+#### Binary Sensors
+
+- **Connected**: Shows if the charger is connected to the NexBlue cloud
+- **Vehicle Connected**: Indicates if a vehicle is plugged into the charger
+- **Charging**: Shows if the charger is actively charging a vehicle
+- **Error**: Indicates if the charger is in an error state
+
+#### Sensors
+
+- **Power**: Current charging power in kW
+- **Energy (Session)**: Energy delivered in the current charging session in kWh
+- **Energy (Total)**: Total energy delivered by the charger in kWh
+- **Current**: Charging current in amperes
+- **Voltage**: Charging voltage in volts
+- **Status**: Textual status of the charger
+- **WiFi Signal**: Signal strength of the charger's WiFi connection
+
+#### Switches
+
+- **Charging**: Start or stop charging
 
 ![example][exampleimg]
 
@@ -62,6 +85,18 @@ This unofficial integration connects your [NexBlue](https://nexblue.com/) EV cha
 ## 🔐 Authentication
 
 This integration requires your NexBlue account credentials to authenticate with the NexBlue API. Your credentials are stored locally in Home Assistant and are only used to authenticate with the NexBlue API.
+
+### Token Management
+
+The integration handles authentication tokens securely:
+
+- Access tokens expire after 1 day
+- Refresh tokens expire after 30 days
+- The integration automatically refreshes tokens when needed
+
+### API Implementation
+
+This integration uses the official NexBlue API endpoints as documented in their OpenAPI specification. The API specification is stored locally in the `docs/api` directory and can be updated using the provided script in `scripts/update_api_spec.sh`.
 
 ## 🚧 Work in Progress
 

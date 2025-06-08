@@ -1,0 +1,2114 @@
+{
+  "paths": {
+    "/openapi/oauth2/authorize": {
+      "get": {
+        "responses": {
+          "302": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OauthAuthorizeRes"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["oauth2_endpoint"],
+        "summary": "Currently not support pkce.",
+        "parameters": [
+          {
+            "description": "Code used for authorization code grant, token used for implicit grant.",
+            "name": "response_type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ResponseType"
+            },
+            "required": true
+          },
+          {
+            "description": "The client id of the application.",
+            "name": "client_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "description": "The uri to redirect to after authorization. Defined when registering the application.",
+            "name": "redirect_uri",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "description": "The scope of the application.",
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "(Optional) Used to prevent CSRF attacks.",
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "(Optional) Used to prevent replay attacks.",
+            "name": "nonce",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/openapi/oauth2/token": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthTokenParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenRes"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["oauth2_endpoint"],
+        "summary": "Currently not support pkce."
+      }
+    },
+    "/openapi/account/login": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLoginReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenRes"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["account"],
+        "summary": "Individual user or installer logs in to obtain an access token and refresh token for accessing the APIs described in this documentation.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/openapi/account/refresh_token": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountRefreshTokenReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountRefreshTokenRes"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["account"],
+        "summary": "Individual user or installer refreshes the access token using the refresh token.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/openapi/chargers": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListChargerRelationRes"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger"],
+        "summary": "Get the list of chargers that the user can use.",
+        "description": "Only end users of charger can get the list of chargers.\n\nIncluding the invited chargers.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/openapi/chargers/{charger_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargerDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "AuthItemNotExist": {
+                    "$ref": "#/components/examples/AuthItemNotExist"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger"],
+        "summary": "Get the detail of the charger's data.",
+        "description": "User and installer or charger can get the detail of the charger.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/chargers/{charger_id}/cmd/status": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargerConfigStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "DeviceOffline": {
+                    "$ref": "#/components/examples/DeviceOffline"
+                  },
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "AuthItemNotExist": {
+                    "$ref": "#/components/examples/AuthItemNotExist"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Get the current status and configuration details of the charger.",
+        "description": "User and installer or charger can get the detail of the charger.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/chargers/{charger_id}/cmd/start_charging": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CMDChargingControlRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "DeviceOffline": {
+                    "$ref": "#/components/examples/DeviceOffline"
+                  },
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Start a charging session as the current user.",
+        "description": "Only end users of chargers can start the charging session via thia api.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/chargers/{charger_id}/cmd/stop_charging": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CMDChargingControlRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "DeviceOffline": {
+                    "$ref": "#/components/examples/DeviceOffline"
+                  },
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Stop the charging session as the current user.",
+        "description": "Only end users of chargers can stop the charging session via thia api.\n\nRole owner can stop all charging sessions, role user can only stop their own charging session.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/chargers/{charger_id}/cmd/set_current_limit": {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CMDSetCurrentLimit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigWriteRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "DeviceOffline": {
+                    "$ref": "#/components/examples/DeviceOffline"
+                  },
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "AuthItemNotExist": {
+                    "$ref": "#/components/examples/AuthItemNotExist"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Set the current limit of the charger.",
+        "description": "User and installer or charger can get the detail of the charger.\n\nOnly the role owner or installer can set the current limit.\n\nNote1: The value to set must be less than or equal to the circuit fuse.\n\nNote2: The final output current limit of the charger is the minimum value of circuit's fuse, cable_current_limit, current_limit and the approved value of load balancing (only need to be judged when load balancing is enabled).",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/chargers/{charger_id}/cmd/schedule": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChargerScheduleDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Get the schedule details of the charger.",
+        "description": "Only the role owner can get the schedule detail.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ],
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChargerScheduleReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NormalWriteRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Update a schedule item for the charger with the specified schedule mode.",
+        "description": "Only the role owner can update the schedule.\n\nIf a schedule already exists at schedule_index, update the schedule.\n\nIf schedule_index == the current number of schedules, indicating a new schedule.\n\nIf repeat_days is empty, the schedule is a one-time schedule. It would automatically be disabled after the scheduled action is completed.\n\nNumber of schedules: 2 for schedule_charge, 1 for off_peak.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "delete": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteChargerScheduleReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NormalWriteRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Delete a schedule item from the charger based on the specified schedule mode.",
+        "description": "Only the role owner can delete the schedule.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      }
+    },
+    "/openapi/chargers/{charger_id}/cmd/schedule/config": {
+      "put": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateChargerScheduleConfigReq"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NormalWriteRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "OperatorOCPPNotSupport": {
+                    "$ref": "#/components/examples/OperatorOCPPNotSupport"
+                  },
+                  "CommandTimeout": {
+                    "$ref": "#/components/examples/CommandTimeout"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger commands"],
+        "summary": "Update the schedule configuration of the charger.",
+        "description": "Only the role owner can update the schedule config.\n\nOnly when uk_reg is equal to True can schedule_mode be switched to off_peak mode.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        }
+      ]
+    },
+    "/openapi/sessions/charger/{charger_id}": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListChargerSessionsRes"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Custom error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorRes"
+                },
+                "examples": {
+                  "AuthNoPermission": {
+                    "$ref": "#/components/examples/AuthNoPermission"
+                  },
+                  "AuthItemNotExist": {
+                    "$ref": "#/components/examples/AuthItemNotExist"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        },
+        "tags": ["charger sessions"],
+        "summary": "List charger sessions. Installer and Owner can get all sessions. Invited users can only retrieve sessions they have initiated themselves.",
+        "description": "Sessions are included in the response if its end_timestamp falls within the given from_date and to_date interval.",
+        "security": [
+          {
+            "oauth2": []
+          },
+          {
+            "api_key": []
+          }
+        ]
+      },
+      "parameters": [
+        {
+          "in": "path",
+          "name": "charger_id",
+          "schema": {
+            "type": "string"
+          },
+          "required": true,
+          "description": "The charger id, which is the same as the sn of the charger."
+        },
+        {
+          "name": "from_date",
+          "in": "query",
+          "description": "Interval start time. ISO8601 datetime.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        {
+          "name": "to_date",
+          "in": "query",
+          "description": "Interval end time. ISO8601 datetime.",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      ]
+    }
+  },
+  "info": {
+    "title": "NexBlue OpenAPI",
+    "version": "0.1.0",
+    "description": "\nThis is the API documentation for NexBlue's OpenAPI.\n## Authorization\nTo access protected resources, an access_token is required for authentication.\n\nThere are two methods for obtaining an access token, corresponding to different client integration approaches:\n\nFor official enterprise third-party clients, OAuth 2.0 is used to authorize NexBlue user permissions, enabling functionalities such as collecting energy consumption data for accurate billing and fee processing.\n\nFor individual NexBlue users, they can directly obtain a token by using their username and password, enabling more flexible and automated access to the APIs described in this documentation, allowing users to personalize data retrieval and control their devices.\n\n- **access_token**: Used to access the protected resources. Include it in the header with key `Authorization` and the value `<access_token>`. Access token would expire in 1 day.\n- **refresh_token**: Used to obtain a new access_token at the token endpoint without re-authorization. Refresh token would expire in 30 days.\n\n> Note that if the access token expires or is invalid, a 401 Unauthorized error will be returned.\n\n### OAuth2.0\nURL path prefix `/third_party/openapi/oauth2` is for OAuth2.0 authorization.\n\nIf a client wants to access the API through OAuth2.0 authorization, they must contact NexBlue to register and obtain their `client_id`, `client_secret`, define the required `scope`, and set the `redirect_uri`, among other details.\n\nWhen redirecting to the authorization endpoint, it is important to ensure that the `client_id`, `client_secret`, and `redirect_uri` match the registered values.\n\nAfter successful authorization, the client will receive either an authorization code or an access token, depending on the chosen authorization flow.\n\n- **code**: Used to obtain an access_token from the token endpoint.\n\n### Individual NexBlue Users\nCurrently, NexBlue offers two types of public accounts: end users of chargers and installers of chargers. These two account types are independent of each other.\n\nBoth end users and installers can obtain their own access_token by using their username and password.\n\nHowever, different APIs may either allow access to both account types, restrict access to only one, or behave differently depending on the account type.\n\nPlease refer to the specific API documentation for detailed information on access permissions and functional differences.\n\n## API\nAll API prefixes are `/third_party/openapi`.\n\nFor example:\n- `/third_party/openapi/chargers/{charger_id}`: Get the detailed information of the charger.\n\n> If the request returns a 403 Forbidden error, it is likely due to an incorrect URL or HTTP method.\n\n### Charger Commands API\nSince command API requests are forwarded to the device, they are only supported when the device is online.\n\nIf the device is offline, an error response will be returned.\n"
+  },
+  "openapi": "3.0.2",
+  "components": {
+    "schemas": {
+      "OauthAuthorizeRes": {
+        "title": "OauthAuthorizeRes",
+        "type": "object",
+        "properties": {
+          "code": {
+            "default": 302,
+            "type": "integer"
+          }
+        }
+      },
+      "GrantType": {
+        "title": "GrantType",
+        "description": "authorization_code = authorization_code\n\nrefresh_token = refresh_token\n\nclient_credentials = client_credentials\n\n",
+        "enum": ["authorization_code", "refresh_token", "client_credentials"],
+        "type": "string",
+        "x-enumNames": [
+          "authorization_code",
+          "refresh_token",
+          "client_credentials"
+        ]
+      },
+      "OAuthTokenParams": {
+        "title": "OAuthTokenParams",
+        "type": "object",
+        "properties": {
+          "grant_type": {
+            "$ref": "#/components/schemas/GrantType"
+          },
+          "client_id": {
+            "type": "string"
+          },
+          "client_secret": {
+            "type": "string"
+          },
+          "scope": {
+            "description": "Only used if the grant_type is client_credentials.",
+            "type": "string"
+          },
+          "redirect_uri": {
+            "description": "Must be the same redirect_uri that was used to get authorization_code in authorize endpoint. You must provide this parameter if grant_type is authorization_code.",
+            "type": "string"
+          },
+          "refresh_token": {
+            "description": "To generate new access and ID tokens for a user's session, set the value of a refresh_token parameter in your /oauth2/token request to a previously issued refresh token from the same app client.",
+            "type": "string"
+          },
+          "code": {
+            "description": "The authorization code from an authorization code grant. You must provide this parameter if your authorization request included a grant_type of authorization_code.",
+            "type": "string"
+          }
+        },
+        "required": ["grant_type", "client_id", "client_secret"]
+      },
+      "OAuthTokenRes": {
+        "title": "OAuthTokenRes",
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "description": "The token used for API calls. Include this token in the Authorization header when accessing protected resources.",
+            "type": "string"
+          },
+          "refresh_token": {
+            "description": "The token used to refresh the access_token, valid for 30 days. Only returned when using the authorization_code grant type.",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Lifetime of the access_token, in seconds. Default is 3600 seconds.",
+            "type": "integer"
+          },
+          "token_type": {
+            "description": "Type of the token. Always set to Bearer.",
+            "type": "string"
+          }
+        },
+        "required": ["access_token", "expires_in", "token_type"]
+      },
+      "AccountType": {
+        "title": "AccountType",
+        "description": "0 = end_user\n\n1 = installer\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["end_user", "installer"]
+      },
+      "AccountLoginReq": {
+        "title": "AccountLoginReq",
+        "type": "object",
+        "properties": {
+          "username": {
+            "description": "The user’s username, which is the registered email address.",
+            "type": "string"
+          },
+          "password": {
+            "description": "The password associated with the username.",
+            "type": "string"
+          },
+          "account_type": {
+            "description": "The account type.\n\n0 = end_user\n\n1 = installer\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          }
+        },
+        "required": ["username", "password", "account_type"]
+      },
+      "AccountRefreshTokenReq": {
+        "title": "AccountRefreshTokenReq",
+        "type": "object",
+        "properties": {
+          "refresh_token": {
+            "type": "string"
+          },
+          "account_type": {
+            "description": "The account type.\n\n0 = end_user\n\n1 = installer\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountType"
+              }
+            ]
+          }
+        },
+        "required": ["refresh_token", "account_type"]
+      },
+      "AccountRefreshTokenRes": {
+        "title": "AccountRefreshTokenRes",
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "description": "The token used for API calls. Include this token in the Authorization header when accessing protected resources.",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Lifetime of the access_token, in seconds. Default is 3600 seconds.",
+            "type": "integer"
+          },
+          "token_type": {
+            "description": "Type of the token. Always set to Bearer.",
+            "type": "string"
+          }
+        },
+        "required": ["access_token", "expires_in", "token_type"]
+      },
+      "RoleEnum": {
+        "title": "RoleEnum",
+        "description": "0 = owner\n\n1 = user\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["owner", "user"]
+      },
+      "ChargerRelationData": {
+        "title": "ChargerRelationData",
+        "type": "object",
+        "properties": {
+          "serial_number": {
+            "description": "The serial number of the charger.",
+            "type": "string"
+          },
+          "role": {
+            "description": "The role of the user with respect to the charger.\n\n0 = owner\n\n1 = user\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoleEnum"
+              }
+            ]
+          },
+          "place_id": {
+            "description": "The ID of the place where the charger is located.",
+            "type": "string"
+          },
+          "circuit_id": {
+            "description": "The ID of the circuit where the charger is located.",
+            "type": "string"
+          },
+          "is_collection": {
+            "description": "Whether the charger is part of a collection.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "serial_number",
+          "role",
+          "place_id",
+          "circuit_id",
+          "is_collection"
+        ]
+      },
+      "ListChargerRelationRes": {
+        "title": "ListChargerRelationRes",
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "The list of data related to the charger.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChargerRelationData"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "CategoryEnum": {
+        "title": "CategoryEnum",
+        "description": "Private = private\n\nCommunity housing = community_housing\n\nBusiness = business\n\nPublic = public\n\nNormal = normal\n\n",
+        "enum": [
+          "Private",
+          "Community housing",
+          "Business",
+          "Public",
+          "Normal"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "private",
+          "community_housing",
+          "business",
+          "public",
+          "normal"
+        ]
+      },
+      "OperatorTag": {
+        "title": "OperatorTag",
+        "description": "0 = NexBlue\n\n1 = Enegic\n\n2 = NexBlueZen\n\n3 = Monta\n\n4 = CustomOCPP\n\n5 = Wevo\n\n7 = Electriease\n\n8 = Fuuse\n\n9 = Drivee\n\n10 = Current\n\n11 = ClenergyEV\n\n12 = Flexibility\n\n13 = TapElectric\n\n14 = Sintio\n\n15 = Eosvolt\n\n16 = Karnfull\n\n17 = Voltshare\n\n18 = eOne\n\n19 = Chargespot\n\n20 = PowerFuel\n\n",
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20
+        ],
+        "type": "integer",
+        "x-enumNames": [
+          "NexBlue",
+          "Enegic",
+          "NexBlueZen",
+          "Monta",
+          "CustomOCPP",
+          "Wevo",
+          "Electriease",
+          "Fuuse",
+          "Drivee",
+          "Current",
+          "ClenergyEV",
+          "Flexibility",
+          "TapElectric",
+          "Sintio",
+          "Eosvolt",
+          "Karnfull",
+          "Voltshare",
+          "eOne",
+          "Chargespot",
+          "PowerFuel"
+        ]
+      },
+      "CurrencyEnum": {
+        "title": "CurrencyEnum",
+        "description": "EUR = EUR\n\nDKK = DKK\n\nISK = ISK\n\nNOK = NOK\n\nGBP = GBP\n\nSEK = SEK\n\nCHF = CHF\n\nUSD = USD\n\nAUD = AUD\n\nILS = ILS\n\nPLN = PLN\n\nTRY = TRY\n\n",
+        "enum": [
+          "EUR",
+          "DKK",
+          "ISK",
+          "NOK",
+          "GBP",
+          "SEK",
+          "CHF",
+          "USD",
+          "AUD",
+          "ILS",
+          "PLN",
+          "TRY"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "EUR",
+          "DKK",
+          "ISK",
+          "NOK",
+          "GBP",
+          "SEK",
+          "CHF",
+          "USD",
+          "AUD",
+          "ILS",
+          "PLN",
+          "TRY"
+        ]
+      },
+      "LbCloudLocalMode": {
+        "title": "LbCloudLocalMode",
+        "description": "1 = local\n\n2 = cloud\n\n",
+        "enum": [1, 2],
+        "type": "integer",
+        "x-enumNames": ["local", "cloud"]
+      },
+      "GridType": {
+        "title": "GridType",
+        "description": "0 = NONE\n\n1 = NA\n\n2 = TN\n\n3 = IT\n\n",
+        "enum": [0, 1, 2, 3],
+        "type": "integer",
+        "x-enumNames": ["NONE", "NA", "TN", "IT"]
+      },
+      "PlaceData": {
+        "title": "PlaceData",
+        "type": "object",
+        "properties": {
+          "id": {
+            "description": "The ID of the place.",
+            "type": "string"
+          },
+          "address": {
+            "description": "The address of the place.",
+            "type": "string"
+          },
+          "category": {
+            "description": "The category of the place.\n\nPrivate = private\n\nCommunity housing = community_housing\n\nBusiness = business\n\nPublic = public\n\nNormal = normal\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CategoryEnum"
+              }
+            ]
+          },
+          "operator_type": {
+            "description": "The operator type of the place.\n\n0 = NexBlue\n\n1 = Enegic\n\n2 = NexBlueZen\n\n3 = Monta\n\n4 = CustomOCPP\n\n5 = Wevo\n\n7 = Electriease\n\n8 = Fuuse\n\n9 = Drivee\n\n10 = Current\n\n11 = ClenergyEV\n\n12 = Flexibility\n\n13 = TapElectric\n\n14 = Sintio\n\n15 = Eosvolt\n\n16 = Karnfull\n\n17 = Voltshare\n\n18 = eOne\n\n19 = Chargespot\n\n20 = PowerFuel\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OperatorTag"
+              }
+            ]
+          },
+          "currency": {
+            "description": "The currency used at the place. Such as Currency\n\nEUR = EUR\n\nDKK = DKK\n\nISK = ISK\n\nNOK = NOK\n\nGBP = GBP\n\nSEK = SEK\n\nCHF = CHF\n\nUSD = USD\n\nAUD = AUD\n\nILS = ILS\n\nPLN = PLN\n\nTRY = TRY\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CurrencyEnum"
+              }
+            ]
+          },
+          "country": {
+            "description": "The country code where the place is located. Such as 'GB'.",
+            "type": "string"
+          },
+          "load_balance_switch": {
+            "description": "If the load balance switch is on.",
+            "type": "integer"
+          },
+          "load_balance_local_cloud": {
+            "description": "The load balance mode of the place. 0: local, 1: cloud.\n\n1 = local\n\n2 = cloud\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LbCloudLocalMode"
+              }
+            ]
+          },
+          "tz_id": {
+            "description": "The timezone ID of the place. Such as 'Europe/London'.",
+            "type": "string"
+          },
+          "uk_reg": {
+            "description": "Whether the place uses UK regulations.",
+            "type": "boolean"
+          },
+          "grid_type": {
+            "description": "The grid type of the place.\n\n0 = NONE\n\n1 = NA\n\n2 = TN\n\n3 = IT\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GridType"
+              }
+            ]
+          },
+          "main_fuse": {
+            "description": "The main fuse rating of the place. Unit: A",
+            "default": 16,
+            "type": "integer"
+          },
+          "main_fuse_limit": {
+            "description": "The maximum percentage of the main fuse that can be used. 40~100",
+            "default": 95,
+            "type": "integer"
+          },
+          "fallback_current": {
+            "description": "The fallback current setting of the place. Unit: A. If set to 0, fallback would stop charging.",
+            "default": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "address",
+          "category",
+          "operator_type",
+          "currency",
+          "country",
+          "load_balance_switch",
+          "load_balance_local_cloud",
+          "tz_id",
+          "uk_reg",
+          "grid_type"
+        ]
+      },
+      "CircuitData": {
+        "title": "CircuitData",
+        "type": "object",
+        "properties": {
+          "place_id": {
+            "description": "The ID of the place.",
+            "type": "string"
+          },
+          "circuit_id": {
+            "description": "The ID of the circuit.",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the circuit.",
+            "type": "string"
+          },
+          "fuse": {
+            "description": "The fuse of the circuit. Unit: A",
+            "type": "integer"
+          },
+          "chargers": {
+            "description": "The list of charger SerialNumbers in the circuit.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["place_id", "circuit_id", "name", "fuse", "chargers"]
+      },
+      "ChargerProductName": {
+        "title": "ChargerProductName",
+        "description": "NexBlue Edge = nexblue_edge\n\nNexBlue Edge (UK) = nexblue_edge_uk\n\nNexBlue Point = nexblue_point\n\nNexBlue Point (UK) = nexblue_point_uk\n\n",
+        "enum": [
+          "NexBlue Edge",
+          "NexBlue Edge (UK)",
+          "NexBlue Point",
+          "NexBlue Point (UK)"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "nexblue_edge",
+          "nexblue_edge_uk",
+          "nexblue_point",
+          "nexblue_point_uk"
+        ]
+      },
+      "DeviceOperatorType": {
+        "title": "DeviceOperatorType",
+        "description": "0 = NexBlue\n\n1 = Enegic\n\n2 = NexBlueZen\n\n3 = OCPP\n\n",
+        "enum": [0, 1, 2, 3],
+        "type": "integer",
+        "x-enumNames": ["NexBlue", "Enegic", "NexBlueZen", "OCPP"]
+      },
+      "OCPPData": {
+        "title": "OCPPData",
+        "type": "object",
+        "properties": {
+          "endpoint_url": {
+            "description": "The endpoint URL for OCPP.",
+            "type": "string"
+          },
+          "password": {
+            "description": "The password for OCPP.",
+            "type": "string"
+          }
+        },
+        "required": ["endpoint_url", "password"]
+      },
+      "ChargerDetail": {
+        "title": "ChargerDetail",
+        "type": "object",
+        "properties": {
+          "serial_number": {
+            "description": "The serial number of the charger.",
+            "type": "string"
+          },
+          "pin_code": {
+            "description": "The pin code of the charger. Only returned for owner or installer.",
+            "type": "string"
+          },
+          "role": {
+            "description": "The role of the user with respect to the charger. Only returned for end_user.\n\n0 = owner\n\n1 = user\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoleEnum"
+              }
+            ]
+          },
+          "place_data": {
+            "description": "Detailed information about the place where the charger is located.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PlaceData"
+              }
+            ]
+          },
+          "circuit_data": {
+            "description": "Detailed information about the circuit where the charger is located.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CircuitData"
+              }
+            ]
+          },
+          "online": {
+            "description": "Whether the charger is online.",
+            "type": "boolean"
+          },
+          "product_name": {
+            "description": "The product name of the charger.\n\nNexBlue Edge = nexblue_edge\n\nNexBlue Edge (UK) = nexblue_edge_uk\n\nNexBlue Point = nexblue_point\n\nNexBlue Point (UK) = nexblue_point_uk\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargerProductName"
+              }
+            ]
+          },
+          "device_operator_type": {
+            "description": "The operator type of the charger.\n\n0 = NexBlue\n\n1 = Enegic\n\n2 = NexBlueZen\n\n3 = OCPP\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceOperatorType"
+              }
+            ]
+          },
+          "ocpp_data": {
+            "description": "OCPP-specific data for the charger. Only returned for OCPP chargers.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OCPPData"
+              }
+            ]
+          }
+        },
+        "required": [
+          "serial_number",
+          "place_data",
+          "circuit_data",
+          "online",
+          "product_name",
+          "device_operator_type"
+        ]
+      },
+      "ChargerStatus": {
+        "title": "ChargerStatus",
+        "description": "0 = idle\n\n1 = connected\n\n2 = charging\n\n3 = finished\n\n4 = error\n\n5 = lb_waiting\n\n6 = delay_waiting\n\n7 = ev_waiting\n\n",
+        "enum": [0, 1, 2, 3, 4, 5, 6, 7],
+        "type": "integer",
+        "x-enumNames": [
+          "idle",
+          "connected",
+          "charging",
+          "finished",
+          "error",
+          "lb_waiting",
+          "delay_waiting",
+          "ev_waiting"
+        ]
+      },
+      "NetworkStatusEnum": {
+        "title": "NetworkStatusEnum",
+        "description": "0 = none\n\n1 = wifi\n\n2 = lte\n\n",
+        "enum": [0, 1, 2],
+        "type": "integer",
+        "x-enumNames": ["none", "wifi", "lte"]
+      },
+      "CableLockModeEnum": {
+        "title": "CableLockModeEnum",
+        "description": "0 = lock_while_charging\n\n1 = always_locked\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["lock_while_charging", "always_locked"]
+      },
+      "AccessLevelEnum": {
+        "title": "AccessLevelEnum",
+        "description": "0 = authorized_users_only\n\n1 = no_restrictions\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["authorized_users_only", "no_restrictions"]
+      },
+      "PhaseChargingEnum": {
+        "title": "PhaseChargingEnum",
+        "description": "0 = three_phase\n\n1 = single_phase\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["three_phase", "single_phase"]
+      },
+      "ChargerConfigStatus": {
+        "title": "ChargerConfigStatus",
+        "type": "object",
+        "properties": {
+          "protocol_version": {
+            "description": "The protocol version of the charger.",
+            "type": "string"
+          },
+          "charging_state": {
+            "description": "The current charging state of the charger.\n\n0 = idle\n\n1 = connected\n\n2 = charging\n\n3 = finished\n\n4 = error\n\n5 = lb_waiting\n\n6 = delay_waiting\n\n7 = ev_waiting\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargerStatus"
+              }
+            ]
+          },
+          "voltage_list": {
+            "description": "The list of voltages for each phase. 0~255. Contains three items, each indicating one phase voltage respectively. Unit: V",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "current_list": {
+            "description": "The list of currents for each phase. Contains three items, each indicating one phase current respectively. Unit: A",
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "energy": {
+            "description": "The energy consumed by the current charging session. Unit: KWh",
+            "type": "number"
+          },
+          "lifetime_energy": {
+            "description": "The lifetime energy consumed by the charger. Unit: KWh",
+            "type": "number"
+          },
+          "is_lock": {
+            "description": "Whether the charger is locked.",
+            "type": "boolean"
+          },
+          "network_status": {
+            "description": "The network status of the charger.\n\n0 = none\n\n1 = wifi\n\n2 = lte\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkStatusEnum"
+              }
+            ]
+          },
+          "power": {
+            "description": "The current power output of the charger. Unit: KW",
+            "type": "number"
+          },
+          "is_disable": {
+            "description": "Whether the charger is disabled.",
+            "type": "boolean"
+          },
+          "cable_current": {
+            "description": "The cable current limit of the charger. 0~32. If 0, the cable is not plugged. Unit: A",
+            "type": "integer"
+          },
+          "circuit_fuse": {
+            "description": "The fuse of the circuit. Unit: A",
+            "type": "integer"
+          },
+          "current_limit": {
+            "description": "The current limit of the charger. Unit: A",
+            "type": "integer"
+          },
+          "is_always_lock": {
+            "description": "The cable lock mode of the charger.\n\n0 = lock_while_charging\n\n1 = always_locked\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CableLockModeEnum"
+              }
+            ]
+          },
+          "plug_and_charging": {
+            "description": "The access level of the charger.\n\n0 = authorized_users_only\n\n1 = no_restrictions\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccessLevelEnum"
+              }
+            ]
+          },
+          "force_single": {
+            "description": "The phase charging mode of the charger.\n\n0 = three_phase\n\n1 = single_phase\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PhaseChargingEnum"
+              }
+            ]
+          },
+          "brightness": {
+            "description": "The brightness percentage of the charger. 0~100.",
+            "type": "integer"
+          },
+          "uk_reg": {
+            "description": "Whether the UK regulations config is enabled. Only reg_uk equals True can switch switch to offpeak mode.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "protocol_version",
+          "charging_state",
+          "voltage_list",
+          "current_list",
+          "energy",
+          "lifetime_energy",
+          "is_lock",
+          "network_status",
+          "power",
+          "is_disable",
+          "cable_current",
+          "circuit_fuse",
+          "current_limit",
+          "is_always_lock",
+          "plug_and_charging",
+          "force_single",
+          "brightness"
+        ]
+      },
+      "ChargingControlResEnum": {
+        "title": "ChargingControlResEnum",
+        "description": "0 = success\n\n1 = unknown_status\n\n2 = permission_denied\n\n3 = rcd_check_failed\n\n4 = disabled\n\n5 = occupied_by_others\n\n",
+        "enum": [0, 1, 2, 3, 4, 5],
+        "type": "integer",
+        "x-enumNames": [
+          "success",
+          "unknown_status",
+          "permission_denied",
+          "rcd_check_failed",
+          "disabled",
+          "occupied_by_others"
+        ]
+      },
+      "CMDChargingControlRes": {
+        "title": "CMDChargingControlRes",
+        "type": "object",
+        "properties": {
+          "result": {
+            "description": "The result of the operation.\n\n0 = success\n\n1 = unknown_status\n\n2 = permission_denied\n\n3 = rcd_check_failed\n\n4 = disabled\n\n5 = occupied_by_others\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargingControlResEnum"
+              }
+            ]
+          }
+        },
+        "required": ["result"]
+      },
+      "CMDSetCurrentLimit": {
+        "title": "CMDSetCurrentLimit",
+        "type": "object",
+        "properties": {
+          "current_limit": {
+            "description": "The current limit to set for the charger. 6~32. Unit: A",
+            "minimum": 6,
+            "maximum": 32,
+            "type": "integer"
+          }
+        },
+        "required": ["current_limit"]
+      },
+      "ConfigWriteResultEnum": {
+        "title": "ConfigWriteResultEnum",
+        "description": "0 = success\n\n1 = fail\n\n",
+        "enum": [0, 1],
+        "type": "integer",
+        "x-enumNames": ["success", "fail"]
+      },
+      "ConfigWriteRes": {
+        "title": "ConfigWriteRes",
+        "type": "object",
+        "properties": {
+          "result": {
+            "description": "The result of the operation. 0: Success, 1: Fail\n\n0 = success\n\n1 = fail\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConfigWriteResultEnum"
+              }
+            ]
+          }
+        },
+        "required": ["result"]
+      },
+      "ScheduleMode": {
+        "title": "ScheduleMode",
+        "description": "0 = off_peak\n\n1 = eco\n\n2 = schedule_charge\n\n",
+        "enum": [0, 1, 2],
+        "type": "integer",
+        "x-enumNames": ["off_peak", "eco", "schedule_charge"]
+      },
+      "ScheduleItem": {
+        "title": "ScheduleItem",
+        "type": "object",
+        "properties": {
+          "start_hour": {
+            "description": "The start hour of the schedule. 0~23.",
+            "minimum": 0,
+            "maximum": 23,
+            "type": "integer"
+          },
+          "start_minute": {
+            "description": "The start minute of the schedule. 0~59.",
+            "minimum": 0,
+            "maximum": 59,
+            "type": "integer"
+          },
+          "stop_hour": {
+            "description": "The end hour of the schedule. 0~23.",
+            "minimum": 0,
+            "maximum": 23,
+            "type": "integer"
+          },
+          "stop_minute": {
+            "description": "The end minute of the schedule. 0~59.",
+            "minimum": 0,
+            "maximum": 59,
+            "type": "integer"
+          },
+          "repeat_days": {
+            "description": "The list of days the schedule repeats on. 1: Monday ... 7: Sunday. available values: 1~7.",
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "enabled": {
+            "description": "Whether the schedule item is enabled.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "start_hour",
+          "start_minute",
+          "stop_hour",
+          "stop_minute",
+          "repeat_days",
+          "enabled"
+        ]
+      },
+      "ChargerScheduleDetail": {
+        "title": "ChargerScheduleDetail",
+        "type": "object",
+        "properties": {
+          "schedule_mode": {
+            "description": "schedule_charge: The charger will start and stop charging at the specified time. Up to two items.\n offpeak: Similar to schedule_charge, but the charger will wait for a random time period, up to 30 minutes, before starting charging when the start charging time is reached. Up to 1 item. Only allowed to change to this mode when the uk_reg attribute of the location is True.\n eco: After the device is plugged in, the server will calculate a low-price charging schedule based on the user's eco configuration. Currently cannot be enabled through the API.\n\n0 = off_peak\n\n1 = eco\n\n2 = schedule_charge\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleMode"
+              }
+            ]
+          },
+          "uk_reg": {
+            "description": "Whether the UK regulations config is enabled. Only reg_uk equals True can schedule be switched to offpeak mode.",
+            "type": "boolean"
+          },
+          "charge_schedules": {
+            "description": "The list of schedule_charge item. Normal schedule. Number of items: 0~2.",
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleItem"
+            }
+          },
+          "offpeak_schedules": {
+            "description": "The list of offpeak schedule item. Offpeak schedule. Number of items: 0~1.",
+            "maxItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleItem"
+            }
+          },
+          "eco_schedules": {
+            "description": "The eco schedule item.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ScheduleItem"
+            }
+          }
+        },
+        "required": [
+          "schedule_mode",
+          "charge_schedules",
+          "offpeak_schedules",
+          "eco_schedules"
+        ]
+      },
+      "AvailableScheduleMode": {
+        "title": "AvailableScheduleMode",
+        "description": "0 = off_peak\n\n2 = schedule_charge\n\n",
+        "enum": [0, 2],
+        "type": "integer",
+        "x-enumNames": ["off_peak", "schedule_charge"]
+      },
+      "UpdateChargerScheduleConfigReq": {
+        "title": "UpdateChargerScheduleConfigReq",
+        "type": "object",
+        "properties": {
+          "schedule_mode": {
+            "description": "The schedule mode to switch.\n\n0 = off_peak\n\n2 = schedule_charge\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AvailableScheduleMode"
+              }
+            ]
+          }
+        },
+        "required": ["schedule_mode"]
+      },
+      "NormalWriteResEnum": {
+        "title": "NormalWriteResEnum",
+        "description": "0 = success\n\n1 = fail\n\n255 = other_fail\n\n",
+        "enum": [0, 1, 255],
+        "type": "integer",
+        "x-enumNames": ["success", "fail", "other_fail"]
+      },
+      "NormalWriteRes": {
+        "title": "NormalWriteRes",
+        "type": "object",
+        "properties": {
+          "result": {
+            "description": "The result of the operation.\n\n0 = success\n\n1 = fail\n\n255 = other_fail\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NormalWriteResEnum"
+              }
+            ]
+          }
+        },
+        "required": ["result"]
+      },
+      "UpdateChargerScheduleReq": {
+        "title": "UpdateChargerScheduleReq",
+        "type": "object",
+        "properties": {
+          "schedule_item": {
+            "description": "The schedule item to update.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScheduleItem"
+              }
+            ]
+          },
+          "schedule_index": {
+            "description": "The index of the schedule item to update. Failed if the index is not found.",
+            "type": "integer"
+          }
+        },
+        "required": ["schedule_item", "schedule_index"]
+      },
+      "DeleteChargerScheduleReq": {
+        "title": "DeleteChargerScheduleReq",
+        "type": "object",
+        "properties": {
+          "schedule_index": {
+            "description": "The index of the schedule item to delete.",
+            "type": "integer"
+          }
+        },
+        "required": ["schedule_index"]
+      },
+      "ListChargerSessionsReq": {
+        "title": "ListChargerSessionsReq",
+        "type": "object",
+        "properties": {
+          "from_date": {
+            "description": "Interval start time. ISO8601 datetime.",
+            "type": "string",
+            "format": "date-time"
+          },
+          "to_date": {
+            "description": "Interval end time. ISO8601 datetime.",
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["from_date", "to_date"]
+      },
+      "ChargingLogStartReasonStr": {
+        "title": "ChargingLogStartReasonStr",
+        "description": "Local = Local\n\nRemote = Remote\n\nAdmin = Admin\n\nSchedule = Schedule\n\nNone = _None\n\nErrorRecover = ErrorRecover\n\nPlugAndCharge = PlugAndCharge\n\n",
+        "enum": [
+          "Local",
+          "Remote",
+          "Admin",
+          "Schedule",
+          "None",
+          "ErrorRecover",
+          "PlugAndCharge"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "Local",
+          "Remote",
+          "Admin",
+          "Schedule",
+          "_None",
+          "ErrorRecover",
+          "PlugAndCharge"
+        ]
+      },
+      "ChargingLogStopReasonStr": {
+        "title": "ChargingLogStopReasonStr",
+        "description": "EmergencyStop = EmergencyStop\n\nEVDisconnected = EVDisconnected\n\nHardReset = HardReset\n\nLocal = Local\n\nOther = _Other\n\nPowerLoss = PowerLoss\n\nReboot = Reboot\n\nRemote = Remote\n\nSoftReset = SoftReset\n\nUnlockCommand = UnlockCommand\n\nDeAuthorized = DeAuthorized\n\nAdmin = Admin\n\nSchedule = Schedule\n\nNone = _None\n\nLB_Required = LB_Required\n\nComplete = Complete\n\n",
+        "enum": [
+          "EmergencyStop",
+          "EVDisconnected",
+          "HardReset",
+          "Local",
+          "Other",
+          "PowerLoss",
+          "Reboot",
+          "Remote",
+          "SoftReset",
+          "UnlockCommand",
+          "DeAuthorized",
+          "Admin",
+          "Schedule",
+          "None",
+          "LB_Required",
+          "Complete"
+        ],
+        "type": "string",
+        "x-enumNames": [
+          "EmergencyStop",
+          "EVDisconnected",
+          "HardReset",
+          "Local",
+          "_Other",
+          "PowerLoss",
+          "Reboot",
+          "Remote",
+          "SoftReset",
+          "UnlockCommand",
+          "DeAuthorized",
+          "Admin",
+          "Schedule",
+          "_None",
+          "LB_Required",
+          "Complete"
+        ]
+      },
+      "ChargerSession": {
+        "title": "ChargerSession",
+        "type": "object",
+        "properties": {
+          "end_timestamp": {
+            "description": "The end time of the charging session.",
+            "type": "integer"
+          },
+          "start_timestamp": {
+            "description": "The start time of the charging session.",
+            "type": "integer"
+          },
+          "consumption": {
+            "description": "The energy consumed during the charging session. Unit: KWh",
+            "type": "number"
+          },
+          "start_reason": {
+            "description": "The reason for starting the charging session.\n\nLocal = Local\n\nRemote = Remote\n\nAdmin = Admin\n\nSchedule = Schedule\n\nNone = _None\n\nErrorRecover = ErrorRecover\n\nPlugAndCharge = PlugAndCharge\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargingLogStartReasonStr"
+              }
+            ]
+          },
+          "stop_reason": {
+            "description": "The reason for stopping the charging session.\n\nEmergencyStop = EmergencyStop\n\nEVDisconnected = EVDisconnected\n\nHardReset = HardReset\n\nLocal = Local\n\nOther = _Other\n\nPowerLoss = PowerLoss\n\nReboot = Reboot\n\nRemote = Remote\n\nSoftReset = SoftReset\n\nUnlockCommand = UnlockCommand\n\nDeAuthorized = DeAuthorized\n\nAdmin = Admin\n\nSchedule = Schedule\n\nNone = _None\n\nLB_Required = LB_Required\n\nComplete = Complete\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ChargingLogStopReasonStr"
+              }
+            ]
+          },
+          "operator_type": {
+            "description": "The operator type of the charger when the session started.\n\n0 = NexBlue\n\n1 = Enegic\n\n2 = NexBlueZen\n\n3 = OCPP\n\n",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeviceOperatorType"
+              }
+            ]
+          }
+        },
+        "required": [
+          "end_timestamp",
+          "start_timestamp",
+          "consumption",
+          "start_reason",
+          "stop_reason",
+          "operator_type"
+        ]
+      },
+      "ListChargerSessionsRes": {
+        "title": "ListChargerSessionsRes",
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChargerSession"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "ErrorRes": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "ResponseType": {
+        "title": "ResponseType",
+        "description": "code = code\n\ntoken = token\n\n",
+        "enum": ["code", "token"],
+        "type": "string",
+        "x-enumNames": ["code", "token"]
+      }
+    },
+    "examples": {
+      "AuthNoPermission": {
+        "value": {
+          "code": 2103,
+          "msg": "have no permission to operate"
+        }
+      },
+      "AuthItemNotExist": {
+        "value": {
+          "code": 2107,
+          "msg": "auth item not exist"
+        }
+      },
+      "DeviceOffline": {
+        "value": {
+          "code": 2105,
+          "msg": "{sn}device offline, command can not be sent"
+        }
+      },
+      "OperatorOCPPNotSupport": {
+        "value": {
+          "code": 2404,
+          "msg": "The charger current operator is OCPP, this api does not support calling when the charger is OCPP controlled"
+        }
+      },
+      "UnauthorizedError": {
+        "summary": "Unauthorized",
+        "description": "Please use a valid access token and pass it in the header with key Authorization, value Bearer <access_token>.",
+        "value": {
+          "message": "The incoming token has expired"
+        }
+      },
+      "CommandTimeout": {
+        "summary": "CommandTimeout",
+        "description": "The command response timeout.",
+        "value": {
+          "code": 2101,
+          "message": "command to device timeout"
+        }
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Unauthorized. Please use a valid access token and pass it in the header with key Authorization, value Bearer <access_token>.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorRes"
+            },
+            "examples": {
+              "UnauthorizedError": {
+                "$ref": "#/components/examples/UnauthorizedError"
+              }
+            }
+          }
+        }
+      },
+      "DeviceCommandConditionError": {
+        "description": "Some conditions of the action are not met. Such as the device is offline.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorRes"
+            },
+            "examples": {
+              "CommandTimeout": {
+                "$ref": "#/components/examples/CommandTimeout"
+              }
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "oauth2": {
+        "type": "oauth2",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://api.nexblue.com/third_party/openapi/oauth2/authorize",
+            "tokenUrl": "https://api.nexblue.com/third_party/openapi/oauth2/token",
+            "scopes": {}
+          }
+        }
+      },
+      "api_key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "oauth2_endpoint",
+      "description": "Including authorize and token endpoint"
+    },
+    {
+      "name": "charger",
+      "description": "Charger related operations"
+    },
+    {
+      "name": "charger commands",
+      "description": "Send Commands to chargers. Only online device are supported."
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://api.nexblue.com/third_party",
+      "description": "API server"
+    }
+  ]
+}

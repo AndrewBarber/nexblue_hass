@@ -1,12 +1,12 @@
 {
   "domain": "nexblue_hass",
-  "name": "NexBlue",
+  "name": "NexBlue EV Charger",
   "documentation": "https://github.com/AndrewBarber/nexblue_hass",
   "issue_tracker": "https://github.com/AndrewBarber/nexblue_hass/issues",
   "dependencies": [],
   "config_flow": true,
   "codeowners": ["@AndrewBarber"],
-  "requirements": ["requests>=2.0.0"],
+  "requirements": ["aiohttp>=3.0.0"],
   "iot_class": "cloud_polling",
   "version": "0.1.0"
 }

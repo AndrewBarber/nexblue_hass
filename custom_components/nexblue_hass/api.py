@@ -12,9 +12,11 @@ import aiohttp
 import async_timeout
 
 TIMEOUT = 10
+# API endpoints based on the OpenAPI specification
 API_BASE_URL = "https://api.nexblue.com/third_party/openapi"
 LOGIN_URL = f"{API_BASE_URL}/account/login"
 REFRESH_TOKEN_URL = f"{API_BASE_URL}/account/refresh_token"
+CHARGERS_URL = f"{API_BASE_URL}/chargers"
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -116,9 +118,91 @@ class NexBlueApiClient:
             _LOGGER.error("Failed to authenticate with NexBlue API")
             return {}
 
-        # For now, return a simple placeholder
-        # We'll expand this in the next steps
-        return {"authenticated": True}
+        try:
+            # Get list of chargers
+            chargers_data = await self.api_wrapper("get", CHARGERS_URL)
+
+            if not chargers_data or "chargers" not in chargers_data:
+                _LOGGER.error(
+                    "No charger data received from NexBlue API or invalid response format"
+                )
+                return {}
+
+            # For each charger, get detailed status
+            result = {"chargers": []}
+
+            for charger in chargers_data.get("chargers", []):
+                charger_id = charger.get("id")
+                if charger_id:
+                    # Get detailed status for this charger
+                    status_url = f"{CHARGERS_URL}/{charger_id}/cmd/status"
+                    status_data = await self.api_wrapper("get", status_url)
+
+                    if status_data:
+                        # Combine basic charger info with status data
+                        charger_info = {**charger, "status": status_data}
+                        result["chargers"].append(charger_info)
+
+            return result
+
+        except Exception as ex:
+            _LOGGER.error("Error fetching data from NexBlue API: %s", ex)
+            return {}
+
+    async def async_start_charging(self, charger_id: str) -> bool:
+        """Start a charging session for a specific charger."""
+        # Ensure we have a valid token before making API calls
+        if not await self.async_ensure_token_valid():
+            _LOGGER.error("Failed to authenticate with NexBlue API")
+            return False
+
+        try:
+            start_url = f"{CHARGERS_URL}/{charger_id}/cmd/start_charging"
+            response = await self.api_wrapper("post", start_url)
+
+            # According to API spec, response contains a result field with status code
+            # 0 = success, other values indicate different error conditions
+            if response and response.get("result", -1) == 0:
+                _LOGGER.info(
+                    "Successfully started charging session for charger %s", charger_id
+                )
+                return True
+            else:
+                _LOGGER.error("Failed to start charging session: %s", response)
+                return False
+
+        except Exception as ex:
+            _LOGGER.error("Error starting charging session: %s", ex)
+            return False
+
+    async def async_stop_charging(self, charger_id: str) -> bool:
+        """Stop a charging session for a specific charger."""
+        # Ensure we have a valid token before making API calls
+        if not await self.async_ensure_token_valid():
+            _LOGGER.error("Failed to authenticate with NexBlue API")
+            return False
+
+        try:
+            stop_url = f"{CHARGERS_URL}/{charger_id}/cmd/stop_charging"
+            response = await self.api_wrapper("post", stop_url)
+
+            # According to API spec, response contains a result field with status code
+            # 0 = success, other values indicate different error conditions
+            if response and response.get("result", -1) == 0:
+                _LOGGER.info(
+                    "Successfully stopped charging session for charger %s", charger_id
+                )
+                return True
+            else:
+                _LOGGER.error("Failed to stop charging session: %s", response)
+                return False
+
+        except Exception as ex:
+            _LOGGER.error("Error stopping charging session: %s", ex)
+            return False
+
+    # Note: Advanced features like set_current_limit and get_schedule removed for v1
+    # to focus on essential functionality and safety
 
     async def api_wrapper(
         self, method: str, url: str, data: dict = None, headers: dict = None

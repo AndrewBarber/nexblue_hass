@@ -1,33 +1,131 @@
-"""Binary sensor platform for NexBlue."""
-from homeassistant.components.binary_sensor import BinarySensorEntity
+"""Binary sensor platform for NexBlue EV Chargers."""
+from __future__ import annotations
 
-from .const import BINARY_SENSOR
-from .const import BINARY_SENSOR_DEVICE_CLASS
-from .const import DEFAULT_NAME
+from dataclasses import dataclass
+from typing import Any
+from typing import Callable
+
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from .const import DOMAIN
 from .entity import NexBlueEntity
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup binary_sensor platform."""
+@dataclass
+class NexBlueBinarySensorEntityDescription(BinarySensorEntityDescription):
+    """Class describing NexBlue binary sensor entities."""
+
+    is_on_fn: Callable[[dict], bool] = None
+
+
+BINARY_SENSOR_TYPES: tuple[NexBlueBinarySensorEntityDescription, ...] = (
+    NexBlueBinarySensorEntityDescription(
+        key="connected",
+        name="Connected",
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        is_on_fn=lambda data: data.get("status", {}).get("connected", False),
+    ),
+    NexBlueBinarySensorEntityDescription(
+        key="vehicle_connected",
+        name="Vehicle Connected",
+        device_class=BinarySensorDeviceClass.PLUG,
+        is_on_fn=lambda data: data.get("status", {}).get("vehicle_connected", False),
+    ),
+    NexBlueBinarySensorEntityDescription(
+        key="charging",
+        name="Charging",
+        device_class=BinarySensorDeviceClass.BATTERY_CHARGING,
+        is_on_fn=lambda data: data.get("status", {}).get("charging_status")
+        == "charging",
+    ),
+    NexBlueBinarySensorEntityDescription(
+        key="error",
+        name="Error",
+        device_class=BinarySensorDeviceClass.PROBLEM,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        is_on_fn=lambda data: data.get("status", {}).get("error_state", False),
+    ),
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """Set up NexBlue binary sensors based on config entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_devices([NexBlueBinarySensor(coordinator, entry)])
+
+    entities = []
+
+    # Check if we have any chargers in the data
+    if "chargers" in coordinator.data:
+        for charger in coordinator.data["chargers"]:
+            charger_id = charger["id"]
+            for description in BINARY_SENSOR_TYPES:
+                entities.append(
+                    NexBlueBinarySensor(
+                        coordinator=coordinator,
+                        config_entry=entry,
+                        charger_id=charger_id,
+                        description=description,
+                    )
+                )
+
+    if entities:
+        async_add_entities(entities)
 
 
 class NexBlueBinarySensor(NexBlueEntity, BinarySensorEntity):
-    """nexblue_hass binary_sensor class."""
+    """NexBlue binary sensor class."""
+
+    def __init__(self, coordinator, config_entry, charger_id, description):
+        """Initialize the binary sensor."""
+        super().__init__(coordinator, config_entry)
+        self.entity_description = description
+        self._charger_id = charger_id
+        self._attr_unique_id = f"{config_entry.entry_id}_{charger_id}_{description.key}"
+        charger_name = self._get_charger_name()
+        self._attr_name = f"{charger_name} {description.name}"
+
+    def _get_charger_name(self) -> str:
+        """Get the name of the charger."""
+        for charger in self.coordinator.data.get("chargers", []):
+            if charger.get("id") == self._charger_id:
+                # Try to get a friendly name, fall back to ID if not available
+                return charger.get("name", f"Charger {self._charger_id}")
+        return f"Charger {self._charger_id}"
+
+    def _get_charger_data(self) -> dict[str, Any]:
+        """Get the data for this specific charger."""
+        for charger in self.coordinator.data.get("chargers", []):
+            if charger.get("id") == self._charger_id:
+                return charger
+        return {}
 
     @property
-    def name(self):
-        """Return the name of the binary_sensor."""
-        return f"{DEFAULT_NAME}_{BINARY_SENSOR}"
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this NexBlue charger."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._charger_id)},
+            name=f"NexBlue {self._get_charger_name()}",
+            manufacturer="NexBlue",
+            model=self._get_charger_data().get("model", "EV Charger"),
+            sw_version=self._get_charger_data().get("firmware_version"),
+        )
 
     @property
-    def device_class(self):
-        """Return the class of this binary_sensor."""
-        return BINARY_SENSOR_DEVICE_CLASS
+    def is_on(self) -> bool:
+        """Return true if the binary sensor is on."""
+        charger_data = self._get_charger_data()
+        if not charger_data:
+            return False
 
-    @property
-    def is_on(self):
-        """Return true if the binary_sensor is on."""
-        return self.coordinator.data.get("title", "") == "foo"
+        if self.entity_description.is_on_fn:
+            return self.entity_description.is_on_fn(charger_data)

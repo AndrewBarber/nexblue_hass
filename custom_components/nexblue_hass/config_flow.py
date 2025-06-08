@@ -1,4 +1,7 @@
 """Adds config flow for NexBlue."""
+import logging
+
+import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -9,6 +12,8 @@ from .const import CONF_PASSWORD
 from .const import CONF_USERNAME
 from .const import DOMAIN
 from .const import PLATFORMS
+
+_LOGGER = logging.getLogger(__package__)
 
 
 class NexBlueFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -35,9 +40,12 @@ class NexBlueFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             )
             if valid:
                 return self.async_create_entry(
-                    title=user_input[CONF_USERNAME], data=user_input
+                    title=f"NexBlue ({user_input[CONF_USERNAME]})", data=user_input
                 )
-            else:
+
+            # If we have specific errors from _test_credentials, they're already set
+            # Otherwise, default to auth error
+            if not self._errors:
                 self._errors["base"] = "auth"
 
             return await self._show_config_form(user_input)
@@ -64,11 +72,20 @@ class NexBlueFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             session = async_create_clientsession(self.hass)
             client = NexBlueApiClient(username, password, session)
-            await client.async_get_data()
+            # Directly test login instead of using async_get_data
+            login_successful = await client.async_login()
+            if not login_successful:
+                _LOGGER.error("Failed to authenticate with NexBlue API")
+                return False
             return True
-        except Exception:  # pylint: disable=broad-except
-            pass
-        return False
+        except aiohttp.ClientError:
+            _LOGGER.error("Cannot connect to NexBlue API")
+            self._errors["base"] = "cannot_connect"
+            return False
+        except Exception as exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception: %s", exception)
+            self._errors["base"] = "unknown"
+            return False
 
 
 class NexBlueOptionsFlowHandler(config_entries.OptionsFlow):

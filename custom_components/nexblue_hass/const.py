@@ -1,11 +1,11 @@
-"""Constants for NexBlue."""
+"""Constants for NexBlue EV Charger integration."""
 # Base component constants
-NAME = "NexBlue"
+NAME = "NexBlue EV Charger"
 DOMAIN = "nexblue_hass"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.1.0"
 
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
+ATTRIBUTION = "Data provided by NexBlue API"
 ISSUE_URL = "https://github.com/AndrewBarber/nexblue_hass/issues"
 
 # Icons
