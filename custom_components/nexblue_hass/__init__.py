@@ -5,7 +5,6 @@ For more details about this integration, please refer to
 https://github.com/AndrewBarber/nexblue_hass
 """
 
-import asyncio
 import logging
 from datetime import timedelta
 
@@ -15,15 +14,10 @@ from homeassistant.core_config import Config
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NexBlueApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
-from .const import DOMAIN
-from .const import PLATFORMS
-from .const import STARTUP_MESSAGE
+from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, PLATFORMS, STARTUP_MESSAGE
 
 SCAN_INTERVAL = timedelta(seconds=30)
 
@@ -59,7 +53,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
     # Set up all platforms for this device
-    platforms_to_setup = [platform for platform in PLATFORMS if entry.options.get(platform, True)]
+    platforms_to_setup = [
+        platform for platform in PLATFORMS if entry.options.get(platform, True)
+    ]
     if platforms_to_setup:
         coordinator.platforms.extend(platforms_to_setup)
         await hass.config_entries.async_forward_entry_setups(entry, platforms_to_setup)
@@ -93,9 +89,13 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    platforms_to_unload = [platform for platform in PLATFORMS if platform in coordinator.platforms]
+    platforms_to_unload = [
+        platform for platform in PLATFORMS if platform in coordinator.platforms
+    ]
     if platforms_to_unload:
-        unloaded = await hass.config_entries.async_forward_entry_unloads(entry, platforms_to_unload)
+        unloaded = await hass.config_entries.async_forward_entry_unloads(
+            entry, platforms_to_unload
+        )
     else:
         unloaded = True
     if unloaded:

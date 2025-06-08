@@ -1,4 +1,5 @@
 """Adds config flow for NexBlue."""
+
 import logging
 
 import aiohttp
@@ -8,10 +9,7 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .api import NexBlueApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
-from .const import DOMAIN
-from .const import PLATFORMS
+from .const import CONF_PASSWORD, CONF_USERNAME, DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__package__)
 

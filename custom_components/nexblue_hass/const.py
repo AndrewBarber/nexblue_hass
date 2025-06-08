@@ -1,4 +1,5 @@
 """Constants for NexBlue EV Charger integration."""
+
 # Base component constants
 NAME = "NexBlue EV Charger"
 DOMAIN = "nexblue_hass"

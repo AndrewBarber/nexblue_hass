@@ -3,11 +3,8 @@
 import asyncio
 import logging
 import socket
-from datetime import datetime
-from datetime import timedelta
-from typing import Any
-from typing import Dict
-from typing import Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 import aiohttp
 import async_timeout

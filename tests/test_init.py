@@ -1,22 +1,18 @@
 """Test NexBlue setup process."""
+
 import pytest
-from custom_components.nexblue_hass import (
-    async_reload_entry,
-)
-from custom_components.nexblue_hass import (
-    async_setup_entry,
-)
-from custom_components.nexblue_hass import (
-    async_unload_entry,
-)
+from homeassistant.exceptions import ConfigEntryNotReady
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
 from custom_components.nexblue_hass import (
     NexBlueDataUpdateCoordinator,
+    async_reload_entry,
+    async_setup_entry,
+    async_unload_entry,
 )
 from custom_components.nexblue_hass.const import (
     DOMAIN,
 )
-from homeassistant.exceptions import ConfigEntryNotReady
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .const import MOCK_CONFIG
 

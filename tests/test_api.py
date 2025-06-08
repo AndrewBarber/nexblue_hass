@@ -1,11 +1,13 @@
 """Tests for NexBlue api."""
+
 import asyncio
 
 import aiohttp
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
 from custom_components.nexblue_hass.api import (
     NexBlueApiClient,
 )
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 
 async def test_api(hass, aioclient_mock, caplog):

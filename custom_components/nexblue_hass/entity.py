@@ -1,10 +1,10 @@
 """NexBlueEntity class"""
+
 from __future__ import annotations
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION
-from .const import DOMAIN
+from .const import ATTRIBUTION, DOMAIN
 
 
 class NexBlueEntity(CoordinatorEntity):

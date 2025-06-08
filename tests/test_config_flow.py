@@ -1,25 +1,18 @@
 """Test NexBlue config flow."""
+
 from unittest.mock import patch
 
 import pytest
+from homeassistant import config_entries, data_entry_flow
+from pytest_homeassistant_custom_component.common import MockConfigEntry
+
 from custom_components.nexblue_hass.const import (
     BINARY_SENSOR,
-)
-from custom_components.nexblue_hass.const import (
     DOMAIN,
-)
-from custom_components.nexblue_hass.const import (
     PLATFORMS,
-)
-from custom_components.nexblue_hass.const import (
     SENSOR,
-)
-from custom_components.nexblue_hass.const import (
     SWITCH,
 )
-from homeassistant import config_entries
-from homeassistant import data_entry_flow
-from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from .const import MOCK_CONFIG
 

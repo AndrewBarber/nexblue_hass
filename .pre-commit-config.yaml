@@ -6,30 +6,24 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.13
+    hooks:
+      - id: ruff
+        args:
+          [
+            --fix,
+            "--select=E,F,I",
+            "--ignore=E501,E203",
+            --line-length=88,
+            --target-version=py39,
+          ]
+        types: [python]
+        files: ^(custom_components|tests)/.+\.py$
+      - id: ruff-format
+        types: [python]
+        files: ^(custom_components|tests)/.+\.py$
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.2.1
     hooks:
       - id: prettier
-  - repo: local
-    hooks:
-      # Run import reordering first
-      - id: reorder-python-imports
-        name: Reorder python imports
-        entry: reorder-python-imports
-        language: system
-        types: [python]
-        args: [--application-directories=custom_components]
-      # Run flake8 next to catch syntax errors early
-      - id: flake8
-        name: flake8
-        entry: flake8
-        language: system
-        types: [python]
-        require_serial: true
-      # Run black last to have final say on formatting
-      - id: black
-        name: black
-        entry: black
-        language: system
-        types: [python]
-        require_serial: true
