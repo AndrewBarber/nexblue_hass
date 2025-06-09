@@ -93,7 +93,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         platform for platform in PLATFORMS if platform in coordinator.platforms
     ]
     if platforms_to_unload:
-        unloaded = await hass.config_entries.async_forward_entry_unloads(
+        unloaded = await hass.config_entries.async_unload_platforms(
             entry, platforms_to_unload
         )
     else:

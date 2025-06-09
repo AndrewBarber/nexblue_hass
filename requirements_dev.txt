@@ -1,1 +1,1 @@
-homeassistant
+homeassistant>=2025.5.3

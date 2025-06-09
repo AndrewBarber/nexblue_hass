@@ -18,4 +18,4 @@ syrupy>=4.0.0
 
 # Linting
 pylint>=2.17.0
-pylint-homeassistant>=0.1.0
+# pylint-homeassistant>=0.1.0 # Not available on PyPI
