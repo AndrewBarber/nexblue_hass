@@ -1310,20 +1310,27 @@ async def test_async_stop_charging_auth_failure(api_client, caplog):
 async def test_async_stop_charging_exception(api_client, caplog):
     """Test stop_charging when an exception occurs during the API call."""
     client, session, mock_response = api_client
-
+    
     # Set up a valid token
     client._access_token = TEST_ACCESS_TOKEN
-
-    # Mock the api_wrapper to raise an exception
-    with patch.object(
-        client, "api_wrapper", AsyncMock(side_effect=Exception("Test exception"))
-    ):
-        with caplog.at_level(logging.ERROR):
-            result = await client.async_stop_charging(TEST_SERIAL_NUMBER)
-
-    # Should return False and log the error
-    assert result is False
-    assert "Error stopping charging session: Test exception" in caplog.text
+    
+    # Create a mock for the api_wrapper that will raise an exception
+    async def mock_api_wrapper(*args, **kwargs):
+        raise Exception("Test exception")
+    
+    # Patch both methods
+    with patch.object(client, "async_ensure_token_valid", return_value=True) as mock_ensure_token, \
+         patch.object(client, "api_wrapper", new=mock_api_wrapper):
+        
+        # Call the method under test
+        result = await client.async_stop_charging(TEST_SERIAL_NUMBER)
+        
+        # Verify the result
+        assert result is False
+        
+        # Verify the error was logged
+        assert any("Error stopping charging session: Test exception" in record.message 
+                 for record in caplog.records if record.levelno == logging.ERROR)
 
 
 @pytest.mark.asyncio
@@ -1407,3 +1414,42 @@ async def test_api_wrapper_parse_error(api_client, caplog):
         f"Expected error log about parsing error with 'missing_key' not found. "
         f"Messages found: {error_messages}"
     )
+
+
+@pytest.mark.asyncio
+async def test_api_wrapper_timeout_error(api_client, caplog):
+    """Test api_wrapper handles timeout errors."""
+    client, _, _ = api_client
+    test_url = "http://test-timeout.com"
+    
+    # Create a mock context manager that raises asyncio.TimeoutError
+    class MockTimeout:
+        async def __aenter__(self):
+            return self
+            
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+            
+        async def __aenter__(self):
+            raise asyncio.TimeoutError("Request timed out")
+            
+        async def __aexit__(self, exc_type, exc_val, exc_tb):
+            pass
+    
+    # Ensure we have a valid token to avoid login attempts
+    client._access_token = "test_token"
+    
+    # Patch async_timeout.timeout to return our mock timeout
+    with patch('custom_components.nexblue_hass.api.async_timeout.timeout', return_value=MockTimeout()):
+        # Call the method under test with ERROR level logging
+        with caplog.at_level(logging.ERROR):
+            result = await client.api_wrapper("get", test_url)
+    
+    # Should return None on timeout
+    assert result is None, "Expected None return value on timeout"
+    
+    # Check for the expected error log
+    assert any("Timeout error fetching information from" in record.message 
+              for record in caplog.records 
+              if record.levelno == logging.ERROR), \
+        "Expected timeout error log not found"
