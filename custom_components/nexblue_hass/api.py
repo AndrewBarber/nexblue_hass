@@ -41,7 +41,7 @@ class NexBlueApiClient:
         login_data = {
             "username": self._username,
             "password": self._password,
-            "account_type": 0,
+            "account_type": 0,  # 0 for end user, 1 for installer
         }
 
         response = await self.api_wrapper("post", LOGIN_URL, data=login_data)
@@ -73,7 +73,10 @@ class NexBlueApiClient:
 
         _LOGGER.debug("Refreshing NexBlue API token")
 
-        refresh_data = {"refresh_token": self._refresh_token}
+        refresh_data = {
+            "refresh_token": self._refresh_token,
+            "account_type": 0,  # 0 for end user, 1 for installer
+        }
 
         response = await self.api_wrapper("post", REFRESH_TOKEN_URL, data=refresh_data)
 
@@ -198,9 +201,8 @@ class NexBlueApiClient:
             response = await self.api_wrapper("post", start_url)
 
             # According to API spec, response contains a result field with status code
-            # For start_charging: 1 = success (charging started)
-            # For stop_charging: 0 = success (charging stopped)
-            if response and response.get("result", -1) == 1:
+            # 0 = success for both start_charging and stop_charging commands
+            if response and response.get("result", -1) == 0:
                 _LOGGER.info(
                     "Successfully started charging for charger %s", charger_serial
                 )
@@ -247,7 +249,10 @@ class NexBlueApiClient:
         self, method: str, url: str, data: dict = None, headers: dict = None
     ) -> Optional[Dict[str, Any]]:
         """Get information from the API."""
-        if data is None:
+        method = method.lower()
+
+        # Only default to empty dict for non-GET requests to avoid sending empty bodies
+        if data is None and method != "get":
             data = {}
         if headers is None:
             headers = self._headers.copy() if self._access_token else HEADERS.copy()
@@ -259,7 +264,10 @@ class NexBlueApiClient:
                 )
 
                 if method == "get":
-                    response = await self._session.get(url, headers=headers)
+                    # Remove Content-Type for GET requests to avoid servers expecting a body
+                    get_headers = headers.copy()
+                    get_headers.pop("Content-Type", None)
+                    response = await self._session.get(url, headers=get_headers)
 
                 elif method == "post":
                     response = await self._session.post(url, headers=headers, json=data)
