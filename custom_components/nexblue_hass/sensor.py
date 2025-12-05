@@ -12,7 +12,12 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfElectricCurrent, UnitOfEnergy, UnitOfPower
+from homeassistant.const import (
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -40,6 +45,18 @@ CHARGING_STATE_MAP = {
     6: "Delayed",
     7: "EV Waiting",
 }
+
+
+def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
+    """Safely pull a voltage value from the API's voltage_list."""
+    voltage_list = data.get("status", {}).get("voltage_list")
+    if not isinstance(voltage_list, list) or len(voltage_list) <= index:
+        return None
+    try:
+        return float(voltage_list[index])
+    except (TypeError, ValueError):
+        return None
+
 
 SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
     NexBlueSensorEntityDescription(
@@ -96,6 +113,33 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
             data.get("status", {}).get("network_status"), "Unknown"
         ),
     ),
+    NexBlueSensorEntityDescription(
+        key="voltage_l1",
+        name="Voltage L1",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:alpha-v-circle",
+        value_fn=lambda data: _voltage_from_list(data, 0),
+    ),
+    NexBlueSensorEntityDescription(
+        key="voltage_l2",
+        name="Voltage L2",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:alpha-v-circle-outline",
+        value_fn=lambda data: _voltage_from_list(data, 1),
+    ),
+    NexBlueSensorEntityDescription(
+        key="voltage_l3",
+        name="Voltage L3",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:alpha-v-circle-outline",
+        value_fn=lambda data: _voltage_from_list(data, 2),
+    ),
 )
 
 
@@ -138,6 +182,7 @@ class NexBlueSensor(NexBlueEntity, SensorEntity):
         )
         charger_name = self._get_charger_name()
         self._attr_name = f"{charger_name} {description.name}"
+
 
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
