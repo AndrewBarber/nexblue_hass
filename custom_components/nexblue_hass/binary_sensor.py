@@ -48,6 +48,15 @@ BINARY_SENSOR_TYPES: tuple[NexBlueBinarySensorEntityDescription, ...] = (
         is_on_fn=lambda data: data.get("status", {}).get("charging_state")
         == 4,  # 4 = error
     ),
+    NexBlueBinarySensorEntityDescription(
+        key="cable_locked",
+        name="Cable Locked",
+        device_class=BinarySensorDeviceClass.LOCK,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:lock",
+        is_on_fn=lambda data: data.get("status", {}).get("cable_lock_mode")
+        == 1,  # 1 = always_locked
+    ),
 )
 
 

@@ -7,6 +7,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.nexblue_hass.const import DOMAIN
 from custom_components.nexblue_hass.sensor import (
+    CABLE_LOCK_MODE_MAP,
     CHARGING_STATE_MAP,
     SENSOR_TYPES,
     NexBlueSensor,
@@ -34,6 +35,8 @@ def mock_coordinator():
                     "current_limit": 16,
                     "network_status": 1,
                     "voltage_list": [230.5, 231.2, 229.8],
+                    "cable_lock_mode": 1,
+                    "cable_current": 32,
                 },
                 "model": "EV Charger Model X",
                 "firmware_version": "1.0.0",
@@ -63,8 +66,8 @@ async def test_sensor_setup_entry(mock_coordinator, mock_config_entry):
     # Verify that sensors were added
     async_add_entities.assert_called_once()
     sensors = async_add_entities.call_args[0][0]
-    # Should create 9 sensors for 1 charger
-    assert len(sensors) == 9
+    # Should create 11 sensors for 1 charger (added 2 cable lock sensors)
+    assert len(sensors) == 11
     for sensor in sensors:
         assert isinstance(sensor, NexBlueSensor)
 
@@ -311,7 +314,7 @@ def test_charging_state_map():
 
 def test_sensor_types_count():
     """Test that SENSOR_TYPES contains expected number of sensors."""
-    assert len(SENSOR_TYPES) == 9
+    assert len(SENSOR_TYPES) == 11  # Added 2 cable lock sensors
 
 
 def test_sensor_types_structure():
@@ -321,3 +324,112 @@ def test_sensor_types_structure():
         assert hasattr(sensor_type, "name")
         assert hasattr(sensor_type, "value_fn")
         assert callable(sensor_type.value_fn)
+
+
+def test_cable_lock_mode_map():
+    """Test CABLE_LOCK_MODE_MAP contains all expected values."""
+    expected_modes = {
+        0: "Lock While Charging",
+        1: "Always Locked",
+    }
+
+    assert CABLE_LOCK_MODE_MAP == expected_modes
+
+
+def test_cable_lock_mode_sensor(mock_coordinator, mock_config_entry):
+    """Test cable lock mode sensor."""
+    # Find the cable lock mode sensor
+    cable_lock_mode_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_lock_mode":
+            cable_lock_mode_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_lock_mode_sensor is not None
+    assert cable_lock_mode_sensor.name == "NexBlue test123 Cable Lock Mode"
+    assert cable_lock_mode_sensor.unique_id == "test_test123_cable_lock_mode"
+    assert cable_lock_mode_sensor.native_value == "Always Locked"
+
+
+def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_entry):
+    """Test cable lock mode sensor with different values."""
+    # Test with lock_while_charging mode
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
+
+    cable_lock_mode_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_lock_mode":
+            cable_lock_mode_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_lock_mode_sensor.native_value == "Lock While Charging"
+
+    # Test with unknown mode
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
+    assert cable_lock_mode_sensor.native_value == "Unknown"
+
+
+def test_cable_current_sensor(mock_coordinator, mock_config_entry):
+    """Test cable current sensor."""
+    # Find the cable current sensor
+    cable_current_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_current":
+            cable_current_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_current_sensor is not None
+    assert cable_current_sensor.name == "NexBlue test123 Cable Current Limit"
+    assert cable_current_sensor.unique_id == "test_test123_cable_current"
+    assert cable_current_sensor.native_value == 32
+    assert cable_current_sensor.native_unit_of_measurement == "A"
+
+
+def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
+    """Test cable current sensor when cable is not plugged."""
+    # Test with cable not plugged (0A)
+    mock_coordinator.data["chargers"][0]["status"]["cable_current"] = 0
+
+    cable_current_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_current":
+            cable_current_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_current_sensor.native_value == 0
+
+
+def test_cable_lock_sensors_no_status(mock_coordinator, mock_config_entry):
+    """Test cable lock sensors when no status data is available."""
+    # Remove status from charger data
+    mock_coordinator.data["chargers"][0].pop("status")
+
+    # Test cable lock mode sensor
+    cable_lock_mode_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_lock_mode":
+            cable_lock_mode_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_lock_mode_sensor.native_value == "Unknown"
+
+    # Test cable current sensor
+    cable_current_sensor = None
+    for sensor_type in SENSOR_TYPES:
+        if sensor_type.key == "cable_current":
+            cable_current_sensor = NexBlueSensor(
+                mock_coordinator, mock_config_entry, "test123", sensor_type
+            )
+            break
+
+    assert cable_current_sensor.native_value is None
