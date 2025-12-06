@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-12-06
+
+### Fixed
+
+- **Cable Lock Sensors Not Appearing** - Fixed API field names that prevented sensors from being discovered
+- **Correct API Field Names** - Changed `cable_lock_mode` → `is_always_lock` (actual API field)
+- **Sensor Implementation** - Updated all sensors to use proper API field references
+- **Test Data** - Fixed test data to match actual NexBlue API specification
+- **Binary Sensor Logic** - Updated cable locked binary sensor to use correct field
+
+### Technical
+
+- Verified against latest NexBlue API specification
+- All cable lock sensors now read from actual API data fields
+- Tests updated to reflect correct API field structure
+- Pre-commit hooks and code quality checks pass
+
+### Notes
+
+- v0.3.0 cable lock sensors were non-functional due to incorrect API field names
+- Users should upgrade to v0.3.1 for working cable lock monitoring
+- No new features added - this is a bugfix release
+
 ## [0.3.0] - 2025-12-06
 
 ### Added
@@ -62,3 +85,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Sensor platform for charger metrics
 - Switch platform for charging control
 - Configuration flow with authentication
+- Cloud polling integration with NexBlue API

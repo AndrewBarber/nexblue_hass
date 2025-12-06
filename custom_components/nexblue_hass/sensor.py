@@ -152,7 +152,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lock",
         value_fn=lambda data: CABLE_LOCK_MODE_MAP.get(
-            data.get("status", {}).get("cable_lock_mode"), "Unknown"
+            data.get("status", {}).get("is_always_lock"), "Unknown"
         ),
     ),
     NexBlueSensorEntityDescription(

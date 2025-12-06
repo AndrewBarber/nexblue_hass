@@ -35,7 +35,7 @@ def mock_coordinator():
                     "current_limit": 16,
                     "network_status": 1,
                     "voltage_list": [230.5, 231.2, 229.8],
-                    "cable_lock_mode": 1,
+                    "is_always_lock": 1,
                     "cable_current": 32,
                 },
                 "model": "EV Charger Model X",
@@ -356,7 +356,7 @@ def test_cable_lock_mode_sensor(mock_coordinator, mock_config_entry):
 def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_entry):
     """Test cable lock mode sensor with different values."""
     # Test with lock_while_charging mode
-    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 0
 
     cable_lock_mode_sensor = None
     for sensor_type in SENSOR_TYPES:
@@ -369,7 +369,7 @@ def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_e
     assert cable_lock_mode_sensor.native_value == "Lock While Charging"
 
     # Test with unknown mode
-    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
+    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 99
     assert cable_lock_mode_sensor.native_value == "Unknown"
 
 

@@ -23,7 +23,7 @@ def mock_coordinator():
                         "name": "Test Charger",
                         "status": {
                             "charging_state": 0,  # idle
-                            "cable_lock_mode": 1,  # always_locked
+                            "is_always_lock": 1,  # always_locked
                             "model": "EV Charger Model X",
                             "firmware_version": "1.0.0",
                         },
@@ -327,7 +327,7 @@ def test_cable_locked_binary_sensor(mock_coordinator, mock_config_entry):
 def test_cable_locked_binary_sensor_unlocked(mock_coordinator, mock_config_entry):
     """Test cable locked binary sensor when unlocked."""
     # Set cable lock mode to 0 (lock_while_charging)
-    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 0
 
     cable_locked_sensor = None
     for description in BINARY_SENSOR_TYPES:
@@ -359,7 +359,7 @@ def test_cable_locked_binary_sensor_no_status(mock_coordinator, mock_config_entr
 def test_cable_locked_binary_sensor_unknown_mode(mock_coordinator, mock_config_entry):
     """Test cable locked binary sensor with unknown mode."""
     # Set cable lock mode to unknown value
-    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
+    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 99
 
     cable_locked_sensor = None
     for description in BINARY_SENSOR_TYPES:
