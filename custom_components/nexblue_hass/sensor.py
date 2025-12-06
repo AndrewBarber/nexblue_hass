@@ -183,7 +183,6 @@ class NexBlueSensor(NexBlueEntity, SensorEntity):
         charger_name = self._get_charger_name()
         self._attr_name = f"{charger_name} {description.name}"
 
-
     def _get_charger_name(self) -> str:
         """Get the name of the charger."""
         # Just use the serial number for a cleaner name
