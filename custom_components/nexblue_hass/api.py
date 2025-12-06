@@ -242,7 +242,38 @@ class NexBlueApiClient:
             _LOGGER.error("Error stopping charging session: %s", ex)
             return False
 
-    # Note: Advanced features like set_current_limit and get_schedule removed for v1
+    async def async_set_current_limit(
+        self, charger_serial: str, current_limit: int
+    ) -> bool:
+        """Set the current limit for a specific charger."""
+        # Ensure we have a valid token before making API calls
+        if not await self.async_ensure_token_valid():
+            _LOGGER.error("Failed to authenticate with NexBlue API")
+            return False
+
+        try:
+            set_limit_url = f"{CHARGERS_URL}/{charger_serial}/cmd/set_current_limit"
+            data = {"current_limit": current_limit}
+            response = await self.api_wrapper("post", set_limit_url, data=data)
+
+            # According to API spec, response contains a result field with status code
+            # 0 = success for set_current_limit command
+            if response and response.get("result", -1) == 0:
+                _LOGGER.info(
+                    "Successfully set current limit to %dA for charger %s",
+                    current_limit,
+                    charger_serial,
+                )
+                return True
+            else:
+                _LOGGER.error("Failed to set current limit: %s", response)
+                return False
+
+        except Exception as ex:
+            _LOGGER.error("Error setting current limit: %s", ex)
+            return False
+
+    # Note: Advanced features like get_schedule removed for v1
     # to focus on essential functionality and safety
 
     async def api_wrapper(
