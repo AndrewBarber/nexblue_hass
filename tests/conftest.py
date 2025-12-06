@@ -1,10 +1,17 @@
 """Global fixtures for NexBlue integration."""
 
 from unittest.mock import patch
+import os
 
 import pytest
 
 pytest_plugins = "pytest_homeassistant_custom_component"
+
+# Set the config directory to the project root so Home Assistant can discover the integration
+@pytest.fixture(autouse=True)
+def set_config_dir(hass):
+    """Set the config directory to project root for integration discovery."""
+    hass.config.config_dir = os.path.dirname(os.path.dirname(__file__))
 
 
 # This fixture is used to prevent HomeAssistant from attempting to create and dismiss persistent
