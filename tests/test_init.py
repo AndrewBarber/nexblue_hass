@@ -1,8 +1,8 @@
 """Test NexBlue setup process."""
 
 from unittest.mock import patch
+
 import pytest
-from homeassistant.core_config import Config
 from homeassistant.exceptions import ConfigEntryNotReady
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -31,9 +31,11 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
 
     # Mock the platform setup to avoid integration discovery
-    with patch("homeassistant.config_entries.ConfigEntries.async_forward_entry_setups") as mock_forward:
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups"
+    ) as mock_forward:
         mock_forward.return_value = None
-        
+
         # Set up the entry and assert that the values set during setup are where we expect
         # them to be. Because we have patched the NexBlueDataUpdateCoordinator.async_get_data
         # call, no code from custom_components/nexblue_hass/api.py actually runs.
@@ -44,7 +46,9 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     )
 
     # Reload the entry and assert that the data from above is still there
-    with patch("homeassistant.config_entries.ConfigEntries.async_forward_entry_setups") as mock_forward:
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups"
+    ) as mock_forward:
         mock_forward.return_value = None
         assert await async_reload_entry(hass, config_entry) is None
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
@@ -63,9 +67,11 @@ async def test_setup_entry_exception(hass, error_on_get_data):
     config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
 
     # Mock the platform setup to avoid integration discovery
-    with patch("homeassistant.config_entries.ConfigEntries.async_forward_entry_setups") as mock_forward:
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups"
+    ) as mock_forward:
         mock_forward.return_value = None
-        
+
         # In this case we are testing the condition where async_setup_entry raises
         # ConfigEntryNotReady using the `error_on_get_data` fixture which simulates
         # an error.
@@ -77,7 +83,7 @@ async def test_setup_entry_exception(hass, error_on_get_data):
 async def test_async_setup(hass):
     """Test async_setup function."""
     from custom_components.nexblue_hass import async_setup
-    
+
     result = await async_setup(hass, {})
     assert result is True
 
@@ -87,18 +93,20 @@ async def test_async_unload_entry_empty_platforms(hass, bypass_get_data):
     """Test async_unload_entry with empty platforms list."""
     # Create a mock entry and coordinator with empty platforms
     config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
-    
+
     # Mock the platform setup to avoid integration discovery
-    with patch("homeassistant.config_entries.ConfigEntries.async_forward_entry_setups") as mock_forward:
+    with patch(
+        "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups"
+    ) as mock_forward:
         mock_forward.return_value = None
-        
+
         # Set up the entry first
         assert await async_setup_entry(hass, config_entry)
-        
+
         # Clear platforms to test the empty platforms branch
         coordinator = hass.data[DOMAIN][config_entry.entry_id]
         coordinator.platforms = []
-        
+
         # Test unload with empty platforms (should hit line 100: unloaded = True)
         result = await async_unload_entry(hass, config_entry)
         assert result is True

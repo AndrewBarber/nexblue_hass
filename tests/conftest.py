@@ -1,11 +1,12 @@
 """Global fixtures for NexBlue integration."""
 
-from unittest.mock import patch
 import os
+from unittest.mock import patch
 
 import pytest
 
 pytest_plugins = "pytest_homeassistant_custom_component"
+
 
 # Set the config directory to the project root so Home Assistant can discover the integration
 @pytest.fixture(autouse=True)
