@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2025-12-06
 
 ### Added
+
 - **Charging Current Limit Control** - New number platform to adjust charging current limit from Home Assistant
 - Users can now set current limit from 6A to 32A in 1A increments
 - Real-time feedback and updates after setting values
@@ -15,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full integration with existing NexBlue charger entities
 
 ### Technical
+
 - Added `async_set_current_limit()` API method
 - Created `NexBlueCurrentLimitNumber` entity in new number.py platform
 - Added NUMBER platform to const.py PLATFORMS list
@@ -22,12 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Overall test coverage: 97.81% (exceeds 90% requirement)
 
 ### Fixed
+
 - Resolved GitHub Issue #21: "Charging current limit" feature request
 - Users can now adjust charging current limit directly from Home Assistant UI
 
 ## [0.1.0] - Initial Release
 
 ### Added
+
 - Basic NexBlue EV Charger integration
 - Binary sensor platform for charger states
 - Sensor platform for charger metrics

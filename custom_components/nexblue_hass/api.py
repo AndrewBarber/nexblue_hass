@@ -242,7 +242,9 @@ class NexBlueApiClient:
             _LOGGER.error("Error stopping charging session: %s", ex)
             return False
 
-    async def async_set_current_limit(self, charger_serial: str, current_limit: int) -> bool:
+    async def async_set_current_limit(
+        self, charger_serial: str, current_limit: int
+    ) -> bool:
         """Set the current limit for a specific charger."""
         # Ensure we have a valid token before making API calls
         if not await self.async_ensure_token_valid():
@@ -258,7 +260,9 @@ class NexBlueApiClient:
             # 0 = success for set_current_limit command
             if response and response.get("result", -1) == 0:
                 _LOGGER.info(
-                    "Successfully set current limit to %dA for charger %s", current_limit, charger_serial
+                    "Successfully set current limit to %dA for charger %s",
+                    current_limit,
+                    charger_serial,
                 )
                 return True
             else:

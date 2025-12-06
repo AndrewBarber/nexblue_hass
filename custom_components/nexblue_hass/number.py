@@ -84,12 +84,12 @@ class NexBlueCurrentLimitNumber(NexBlueEntity, NumberEntity):
         """Set the current limit."""
         # Convert float to int for API
         current_limit = int(value)
-        
+
         try:
             success = await self.coordinator.api.async_set_current_limit(
                 self._charger_serial, current_limit
             )
-            
+
             if success:
                 # Add a small delay before refreshing to allow the charger to update
                 await self.coordinator.async_request_refresh()
