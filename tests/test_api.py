@@ -569,6 +569,114 @@ async def test_api_token_expiration(hass, aioclient_mock, caplog):
 
 
 @pytest.mark.asyncio
+async def test_async_set_current_limit_success(hass, aioclient_mock, caplog):
+    """Test successful current limit setting."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    
+    # Mock login
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        json={"access_token": "test_token", "refresh_token": "test_refresh"}
+    )
+    
+    # Mock set_current_limit success
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/chargers/test123/cmd/set_current_limit",
+        json={"result": 0}
+    )
+    
+    result = await api.async_set_current_limit("test123", 16)
+    assert result is True
+    assert "Successfully set current limit to 16A for charger test123" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_async_set_current_limit_api_failure(hass, aioclient_mock, caplog):
+    """Test current limit setting with API failure."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    
+    # Mock login
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        json={"access_token": "test_token", "refresh_token": "test_refresh"}
+    )
+    
+    # Mock set_current_limit failure
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/chargers/test123/cmd/set_current_limit",
+        json={"result": -1, "error": "Invalid current limit"}
+    )
+    
+    result = await api.async_set_current_limit("test123", 16)
+    assert result is False
+    assert "Failed to set current limit" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_async_set_current_limit_auth_failure(hass, aioclient_mock, caplog):
+    """Test current limit setting with authentication failure."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    
+    # Mock login failure
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        status=401
+    )
+    
+    result = await api.async_set_current_limit("test123", 16)
+    assert result is False
+    assert "Failed to authenticate with NexBlue API" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_async_set_current_limit_exception(hass, aioclient_mock, caplog):
+    """Test current limit setting with network exception."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    
+    # Mock login
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        json={"access_token": "test_token", "refresh_token": "test_refresh"}
+    )
+    
+    # Mock network exception
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/chargers/test123/cmd/set_current_limit",
+        exc=aiohttp.ClientError("Network error")
+    )
+    
+    result = await api.async_set_current_limit("test123", 16)
+    assert result is False
+    assert "Failed to set current limit" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_async_set_current_limit_boundary_values(hass, aioclient_mock, caplog):
+    """Test current limit setting with boundary values."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    
+    # Mock login
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        json={"access_token": "test_token", "refresh_token": "test_refresh"}
+    )
+    
+    # Mock set_current_limit success for boundary values
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/chargers/test123/cmd/set_current_limit",
+        json={"result": 0}
+    )
+    
+    # Test minimum value (6A)
+    result = await api.async_set_current_limit("test123", 6)
+    assert result is True
+    
+    # Test maximum value (32A)
+    result = await api.async_set_current_limit("test123", 32)
+    assert result is True
+
+
+@pytest.mark.asyncio
 async def test_api_invalid_response_format(hass, aioclient_mock, caplog):
     """Test API with invalid response format."""
     api = NexBlueApiClient("test", "test", async_get_clientsession(hass))

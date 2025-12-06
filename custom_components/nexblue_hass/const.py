@@ -4,7 +4,7 @@
 NAME = "NexBlue EV Charger"
 DOMAIN = "nexblue_hass"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 ATTRIBUTION = "Data provided by NexBlue API"
 ISSUE_URL = "https://github.com/AndrewBarber/nexblue_hass/issues"
@@ -17,9 +17,10 @@ BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 
 # Platforms
 BINARY_SENSOR = "binary_sensor"
+NUMBER = "number"
 SENSOR = "sensor"
 SWITCH = "switch"
-PLATFORMS = [BINARY_SENSOR, SENSOR, SWITCH]
+PLATFORMS = [BINARY_SENSOR, NUMBER, SENSOR, SWITCH]
 
 
 # Configuration and options
