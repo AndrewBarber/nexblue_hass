@@ -46,6 +46,12 @@ CHARGING_STATE_MAP = {
     7: "EV Waiting",
 }
 
+# Mapping of cable lock mode values to human-readable strings
+CABLE_LOCK_MODE_MAP = {
+    0: "Lock While Charging",
+    1: "Always Locked",
+}
+
 
 def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
     """Safely pull a voltage value from the API's voltage_list."""
@@ -139,6 +145,25 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:alpha-v-circle-outline",
         value_fn=lambda data: _voltage_from_list(data, 2),
+    ),
+    NexBlueSensorEntityDescription(
+        key="cable_lock_mode",
+        name="Cable Lock Mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:lock",
+        value_fn=lambda data: CABLE_LOCK_MODE_MAP.get(
+            data.get("status", {}).get("cable_lock_mode"), "Unknown"
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="cable_current",
+        name="Cable Current Limit",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:current-ac",
+        value_fn=lambda data: data.get("status", {}).get("cable_current"),
     ),
 )
 

@@ -23,6 +23,7 @@ def mock_coordinator():
                         "name": "Test Charger",
                         "status": {
                             "charging_state": 0,  # idle
+                            "cable_lock_mode": 1,  # always_locked
                             "model": "EV Charger Model X",
                             "firmware_version": "1.0.0",
                         },
@@ -58,8 +59,8 @@ async def test_binary_sensor_setup_entry(mock_coordinator, mock_config_entry):
 
     await async_setup_entry(mock_hass, mock_config_entry, mock_async_add_entities)
 
-    # Should create 3 binary sensors for 1 charger
-    assert len(entities_added) == 3
+    # Should create 4 binary sensors for 1 charger (added cable lock sensor)
+    assert len(entities_added) == 4
     assert all(isinstance(entity, NexBlueBinarySensor) for entity in entities_added)
 
     # Check that all sensor types are represented
@@ -67,6 +68,7 @@ async def test_binary_sensor_setup_entry(mock_coordinator, mock_config_entry):
     assert "charging" in keys
     assert "vehicle_connected" in keys
     assert "error" in keys
+    assert "cable_locked" in keys
 
 
 @pytest.mark.asyncio
@@ -266,7 +268,7 @@ def test_binary_sensor_extra_state_attributes(mock_coordinator, mock_config_entr
 
 def test_binary_sensor_types_count():
     """Test that we have the expected number of binary sensor types."""
-    assert len(BINARY_SENSOR_TYPES) == 3
+    assert len(BINARY_SENSOR_TYPES) == 4  # Added cable lock binary sensor
 
 
 def test_binary_sensor_types_structure():
@@ -303,3 +305,68 @@ def test_binary_sensor_charging_states_comprehensive(
             mock_coordinator, mock_config_entry, "test123", description
         )
         assert sensor.is_on is expected, f"Charging state {state} should be {expected}"
+
+
+def test_cable_locked_binary_sensor(mock_coordinator, mock_config_entry):
+    """Test cable locked binary sensor."""
+    # Find the cable locked binary sensor
+    cable_locked_sensor = None
+    for description in BINARY_SENSOR_TYPES:
+        if description.key == "cable_locked":
+            cable_locked_sensor = NexBlueBinarySensor(
+                mock_coordinator, mock_config_entry, "test123", description
+            )
+            break
+
+    assert cable_locked_sensor is not None
+    assert cable_locked_sensor.name == "NexBlue test123 Cable Locked"
+    assert cable_locked_sensor.unique_id == "test_entry_test123_cable_locked"
+    assert cable_locked_sensor.is_on is True  # cable_lock_mode = 1 (always_locked)
+
+
+def test_cable_locked_binary_sensor_unlocked(mock_coordinator, mock_config_entry):
+    """Test cable locked binary sensor when unlocked."""
+    # Set cable lock mode to 0 (lock_while_charging)
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
+
+    cable_locked_sensor = None
+    for description in BINARY_SENSOR_TYPES:
+        if description.key == "cable_locked":
+            cable_locked_sensor = NexBlueBinarySensor(
+                mock_coordinator, mock_config_entry, "test123", description
+            )
+            break
+
+    assert cable_locked_sensor.is_on is False  # cable_lock_mode = 0 (not always_locked)
+
+
+def test_cable_locked_binary_sensor_no_status(mock_coordinator, mock_config_entry):
+    """Test cable locked binary sensor when no status data is available."""
+    # Remove status from charger data
+    mock_coordinator.data["chargers"][0].pop("status")
+
+    cable_locked_sensor = None
+    for description in BINARY_SENSOR_TYPES:
+        if description.key == "cable_locked":
+            cable_locked_sensor = NexBlueBinarySensor(
+                mock_coordinator, mock_config_entry, "test123", description
+            )
+            break
+
+    assert cable_locked_sensor.is_on is False  # Default to False when no data
+
+
+def test_cable_locked_binary_sensor_unknown_mode(mock_coordinator, mock_config_entry):
+    """Test cable locked binary sensor with unknown mode."""
+    # Set cable lock mode to unknown value
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
+
+    cable_locked_sensor = None
+    for description in BINARY_SENSOR_TYPES:
+        if description.key == "cable_locked":
+            cable_locked_sensor = NexBlueBinarySensor(
+                mock_coordinator, mock_config_entry, "test123", description
+            )
+            break
+
+    assert cable_locked_sensor.is_on is False  # Only True for mode 1 (always_locked)
