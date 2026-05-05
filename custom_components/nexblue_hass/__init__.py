@@ -10,7 +10,6 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.core_config import Config
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -25,11 +24,6 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 # This integration only uses config entry
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
-
-
-async def async_setup(hass: HomeAssistant, config: Config):
-    """Set up this integration using YAML is not supported."""
-    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
