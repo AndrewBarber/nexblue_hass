@@ -11,6 +11,7 @@ from custom_components.nexblue_hass.sensor import (
     CHARGING_STATE_MAP,
     SENSOR_TYPES,
     NexBlueSensor,
+    _unix_to_datetime,
     _voltage_from_list,
     async_setup_entry,
 )
@@ -37,6 +38,13 @@ def mock_coordinator():
                     "voltage_list": [230.5, 231.2, 229.8],
                     "is_always_lock": 1,
                     "cable_current": 32,
+                },
+                "last_session": {
+                    "start_timestamp": 1746489600,
+                    "end_timestamp": 1746496800,
+                    "consumption": 8.4,
+                    "stop_reason": "EVDisconnected",
+                    "start_reason": "Remote",
                 },
                 "model": "EV Charger Model X",
                 "firmware_version": "1.0.0",
@@ -66,8 +74,8 @@ async def test_sensor_setup_entry(mock_coordinator, mock_config_entry):
     # Verify that sensors were added
     async_add_entities.assert_called_once()
     sensors = async_add_entities.call_args[0][0]
-    # Should create 11 sensors for 1 charger (added 2 cable lock sensors)
-    assert len(sensors) == 11
+    # Should create 15 sensors for 1 charger
+    assert len(sensors) == 15
     for sensor in sensors:
         assert isinstance(sensor, NexBlueSensor)
 
@@ -314,7 +322,7 @@ def test_charging_state_map():
 
 def test_sensor_types_count():
     """Test that SENSOR_TYPES contains expected number of sensors."""
-    assert len(SENSOR_TYPES) == 11  # Added 2 cable lock sensors
+    assert len(SENSOR_TYPES) == 15
 
 
 def test_sensor_types_structure():
@@ -405,6 +413,94 @@ def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
             break
 
     assert cable_current_sensor.native_value == 0
+
+
+def test_last_session_start_sensor(mock_coordinator, mock_config_entry):
+    """Test last session start timestamp sensor."""
+    from datetime import UTC, datetime
+
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_start")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    expected = datetime.fromtimestamp(1746489600, tz=UTC)
+    assert sensor.native_value == expected
+    assert sensor.name == "NexBlue test123 Last Session Start"
+    assert sensor.unique_id == "test_test123_last_session_start"
+
+
+def test_last_session_end_sensor(mock_coordinator, mock_config_entry):
+    """Test last session end timestamp sensor."""
+    from datetime import UTC, datetime
+
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_end")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    expected = datetime.fromtimestamp(1746496800, tz=UTC)
+    assert sensor.native_value == expected
+
+
+def test_last_session_energy_sensor(mock_coordinator, mock_config_entry):
+    """Test last session energy sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_energy")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 8.4
+    assert sensor.native_unit_of_measurement == "kWh"
+    assert sensor.name == "NexBlue test123 Last Session Energy"
+    assert sensor.unique_id == "test_test123_last_session_energy"
+
+
+def test_last_session_stop_reason_sensor(mock_coordinator, mock_config_entry):
+    """Test last session stop reason sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_stop_reason")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "EVDisconnected"
+    assert sensor.name == "NexBlue test123 Last Session Stop Reason"
+
+
+def test_last_session_sensors_no_data(mock_coordinator, mock_config_entry):
+    """Test last session sensors when no session data is available."""
+    mock_coordinator.data["chargers"][0]["last_session"] = None
+
+    for key in (
+        "last_session_start",
+        "last_session_end",
+        "last_session_energy",
+        "last_session_stop_reason",
+    ):
+        sensor_type = next(s for s in SENSOR_TYPES if s.key == key)
+        sensor = NexBlueSensor(
+            mock_coordinator, mock_config_entry, "test123", sensor_type
+        )
+        assert sensor.native_value is None
+
+
+def test_unix_to_datetime_valid():
+    """Test _unix_to_datetime with a valid timestamp."""
+    from datetime import UTC, datetime
+
+    data = {"last_session": {"start_timestamp": 1746489600}}
+    result = _unix_to_datetime(data, "start_timestamp")
+    assert result == datetime.fromtimestamp(1746489600, tz=UTC)
+
+
+def test_unix_to_datetime_missing_key():
+    """Test _unix_to_datetime when key is absent."""
+    data = {"last_session": {}}
+    assert _unix_to_datetime(data, "start_timestamp") is None
+
+
+def test_unix_to_datetime_no_session():
+    """Test _unix_to_datetime when last_session is None."""
+    data = {"last_session": None}
+    assert _unix_to_datetime(data, "start_timestamp") is None
+
+
+def test_unix_to_datetime_invalid_value():
+    """Test _unix_to_datetime with non-numeric value."""
+    data = {"last_session": {"start_timestamp": "not-a-number"}}
+    assert _unix_to_datetime(data, "start_timestamp") is None
 
 
 def test_cable_lock_sensors_no_status(mock_coordinator, mock_config_entry):

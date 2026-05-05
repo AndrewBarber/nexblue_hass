@@ -75,7 +75,14 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         """Update data via library."""
         try:
-            return await self.api.async_get_data()
+            data = await self.api.async_get_data()
+            for charger in data.get("chargers", []):
+                serial = charger.get("serial_number")
+                if serial:
+                    charger["last_session"] = await self.api.async_get_last_session(
+                        serial
+                    )
+            return data
         except Exception as exception:
             raise UpdateFailed() from exception
 
