@@ -200,7 +200,9 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         name="UK Regulation Mode",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:flag",
-        value_fn=lambda data: data.get("status", {}).get("uk_reg"),
+        value_fn=lambda data: {True: "Enabled", False: "Disabled"}.get(
+            data.get("status", {}).get("uk_reg")
+        ),
     ),
     NexBlueSensorEntityDescription(
         key="protocol_version",

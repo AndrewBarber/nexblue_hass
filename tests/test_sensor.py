@@ -447,7 +447,7 @@ def test_uk_reg_sensor(mock_coordinator, mock_config_entry):
     sensor_type = next(s for s in SENSOR_TYPES if s.key == "uk_reg")
     sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
 
-    assert sensor.native_value is True
+    assert sensor.native_value == "Enabled"
     assert sensor.name == "NexBlue test123 UK Regulation Mode"
 
 
@@ -469,7 +469,7 @@ def test_config_sensors_missing_status(mock_coordinator, mock_config_entry):
     for key, expected in (
         ("access_level", "Unknown"),
         ("phase_mode", "Unknown"),
-        ("uk_reg", None),
+        ("uk_reg", None),  # None key not in {True: ..., False: ...}
         ("protocol_version", None),
     ):
         sensor_type = next(s for s in SENSOR_TYPES if s.key == key)
