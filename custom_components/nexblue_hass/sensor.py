@@ -52,6 +52,25 @@ CABLE_LOCK_MODE_MAP = {
     1: "Always Locked",
 }
 
+# Mapping of network status values to human-readable strings
+NETWORK_STATUS_MAP = {
+    0: "None",
+    1: "WiFi",
+    2: "LTE",
+    3: "Ethernet",
+}
+
+
+def _current_from_list(data: dict[str, Any], index: int) -> StateType:
+    """Safely pull a current value from the API's current_list."""
+    current_list = data.get("status", {}).get("current_list")
+    if not isinstance(current_list, list) or len(current_list) <= index:
+        return None
+    try:
+        return float(current_list[index])
+    except (TypeError, ValueError):
+        return None
+
 
 def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
     """Safely pull a voltage value from the API's voltage_list."""
@@ -115,7 +134,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         name="Network Status",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:wifi",
-        value_fn=lambda data: {0: "None", 1: "WiFi", 2: "LTE"}.get(
+        value_fn=lambda data: NETWORK_STATUS_MAP.get(
             data.get("status", {}).get("network_status"), "Unknown"
         ),
     ),
@@ -145,6 +164,43 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:alpha-v-circle-outline",
         value_fn=lambda data: _voltage_from_list(data, 2),
+    ),
+    NexBlueSensorEntityDescription(
+        key="current_l1",
+        name="Current L1",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 0),
+    ),
+    NexBlueSensorEntityDescription(
+        key="current_l2",
+        name="Current L2",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 1),
+    ),
+    NexBlueSensorEntityDescription(
+        key="current_l3",
+        name="Current L3",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 2),
+    ),
+    NexBlueSensorEntityDescription(
+        key="circuit_fuse",
+        name="Circuit Fuse",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:fuse",
+        value_fn=lambda data: data.get("status", {}).get("circuit_fuse"),
     ),
     NexBlueSensorEntityDescription(
         key="cable_lock_mode",
