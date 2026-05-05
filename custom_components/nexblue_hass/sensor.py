@@ -160,7 +160,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         name="Energy Today",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.TOTAL,
         icon="mdi:lightning-bolt",
         value_fn=lambda data: data.get("energy_today"),
     ),
