@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "NexBlue EV Charger",
-        "description": "Connect your NexBlue EV charger to Home Assistant. Enter your NexBlue account credentials to get started. For help, visit: https://github.com/AndrewBarber/nexblue_hass",
+        "description": "Connect your NexBlue EV charger to Home Assistant. Enter your NexBlue account credentials to get started.",
         "data": {
           "username": "Username",
           "password": "Password"
