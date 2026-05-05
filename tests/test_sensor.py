@@ -512,6 +512,25 @@ def test_brightness_sensor_missing(mock_coordinator, mock_config_entry):
     assert sensor.native_value is None
 
 
+def test_energy_today_sensor(mock_coordinator, mock_config_entry):
+    """Test energy today sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 5.6
+    assert sensor.native_unit_of_measurement == "kWh"
+    assert sensor.name == "NexBlue test123 Energy Today"
+    assert sensor.unique_id == "test_test123_energy_today"
+
+
+def test_energy_today_sensor_missing(mock_coordinator, mock_config_entry):
+    """Test energy today sensor when data is missing."""
+    mock_coordinator.data["chargers"][0].pop("energy_today")
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+    assert sensor.native_value is None
+
+
 def test_cable_lock_sensors_no_status(mock_coordinator, mock_config_entry):
     """Test cable lock sensors when no status data is available."""
     # Remove status from charger data

@@ -4,7 +4,7 @@
 NAME = "NexBlue EV Charger"
 DOMAIN = "nexblue_hass"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.3.3"
+VERSION = "0.4.0b1"
 
 ATTRIBUTION = "Data provided by NexBlue API"
 ISSUE_URL = "https://github.com/AndrewBarber/nexblue_hass/issues"
