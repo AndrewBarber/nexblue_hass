@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 import aiohttp
-import async_timeout
 
 TIMEOUT = 10
 # API endpoints based on the OpenAPI specification
@@ -289,7 +288,7 @@ class NexBlueApiClient:
             headers = self._headers.copy() if self._access_token else HEADERS.copy()
 
         try:
-            async with async_timeout.timeout(TIMEOUT):
+            async with asyncio.timeout(TIMEOUT):
                 _LOGGER.debug(
                     "%s request to %s with data: %s", method.upper(), url, data
                 )
