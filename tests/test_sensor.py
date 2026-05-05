@@ -38,6 +38,7 @@ def mock_coordinator():
                     "is_always_lock": 1,
                     "cable_current": 32,
                 },
+                "energy_today": 5.6,
                 "model": "EV Charger Model X",
                 "firmware_version": "1.0.0",
             }
@@ -66,8 +67,8 @@ async def test_sensor_setup_entry(mock_coordinator, mock_config_entry):
     # Verify that sensors were added
     async_add_entities.assert_called_once()
     sensors = async_add_entities.call_args[0][0]
-    # Should create 11 sensors for 1 charger (added 2 cable lock sensors)
-    assert len(sensors) == 11
+    # Should create 12 sensors for 1 charger
+    assert len(sensors) == 12
     for sensor in sensors:
         assert isinstance(sensor, NexBlueSensor)
 
@@ -314,7 +315,7 @@ def test_charging_state_map():
 
 def test_sensor_types_count():
     """Test that SENSOR_TYPES contains expected number of sensors."""
-    assert len(SENSOR_TYPES) == 11  # Added 2 cable lock sensors
+    assert len(SENSOR_TYPES) == 12
 
 
 def test_sensor_types_structure():
@@ -405,6 +406,25 @@ def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
             break
 
     assert cable_current_sensor.native_value == 0
+
+
+def test_energy_today_sensor(mock_coordinator, mock_config_entry):
+    """Test energy today sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 5.6
+    assert sensor.native_unit_of_measurement == "kWh"
+    assert sensor.name == "NexBlue test123 Energy Today"
+    assert sensor.unique_id == "test_test123_energy_today"
+
+
+def test_energy_today_sensor_missing(mock_coordinator, mock_config_entry):
+    """Test energy today sensor when data is missing."""
+    mock_coordinator.data["chargers"][0].pop("energy_today")
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+    assert sensor.native_value is None
 
 
 def test_cable_lock_sensors_no_status(mock_coordinator, mock_config_entry):

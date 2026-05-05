@@ -156,6 +156,15 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         ),
     ),
     NexBlueSensorEntityDescription(
+        key="energy_today",
+        name="Energy Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        icon="mdi:lightning-bolt",
+        value_fn=lambda data: data.get("energy_today"),
+    ),
+    NexBlueSensorEntityDescription(
         key="cable_current",
         name="Cable Current Limit",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,

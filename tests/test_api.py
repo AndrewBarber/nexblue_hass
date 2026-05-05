@@ -703,6 +703,86 @@ async def test_api_invalid_response_format(hass, aioclient_mock, caplog):
 
 
 @pytest.mark.asyncio
+async def test_api_get_energy_today(hass, aioclient_mock):
+    """Test async_get_energy_today returns today's total energy."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    aioclient_mock.get(
+        "https://api.nexblue.com/third_party/openapi/measurement/chargers/test123",
+        json={"total": 7.25, "data": [], "granularity": "daily"},
+    )
+
+    result = await api.async_get_energy_today("test123")
+    assert result == 7.25
+
+
+@pytest.mark.asyncio
+async def test_api_get_energy_today_zero(hass, aioclient_mock):
+    """Test async_get_energy_today when total is 0."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    aioclient_mock.get(
+        "https://api.nexblue.com/third_party/openapi/measurement/chargers/test123",
+        json={"total": 0.0, "data": [], "granularity": "daily"},
+    )
+
+    result = await api.async_get_energy_today("test123")
+    assert result == 0.0
+
+
+@pytest.mark.asyncio
+async def test_api_get_energy_today_no_total(hass, aioclient_mock, caplog):
+    """Test async_get_energy_today when response has no total field."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    aioclient_mock.get(
+        "https://api.nexblue.com/third_party/openapi/measurement/chargers/test123",
+        json={"data": [], "granularity": "daily"},
+    )
+
+    result = await api.async_get_energy_today("test123")
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_api_get_energy_today_api_error(hass, aioclient_mock, caplog):
+    """Test async_get_energy_today when API returns error."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    aioclient_mock.get(
+        "https://api.nexblue.com/third_party/openapi/measurement/chargers/test123",
+        status=500,
+        text="Internal Server Error",
+    )
+
+    result = await api.async_get_energy_today("test123")
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_api_get_energy_today_auth_failure(hass, aioclient_mock, caplog):
+    """Test async_get_energy_today when authentication fails."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+
+    aioclient_mock.post(
+        "https://api.nexblue.com/third_party/openapi/account/login",
+        json={"error": "invalid_credentials"},
+    )
+
+    result = await api.async_get_energy_today("test123")
+    assert result is None
+    assert "Failed to authenticate" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_api_no_refresh_token(hass, aioclient_mock, caplog):
     """Test API with no refresh token available."""
     api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
