@@ -191,7 +191,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         name="Last Session Energy",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL,
+        entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lightning-bolt",
         value_fn=lambda data: (data.get("last_session") or {}).get("consumption"),
     ),
