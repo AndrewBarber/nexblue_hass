@@ -13,6 +13,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    PERCENTAGE,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -220,6 +221,15 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:current-ac",
         value_fn=lambda data: data.get("status", {}).get("cable_current"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="brightness",
+        name="LED Brightness",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:brightness-percent",
+        value_fn=lambda data: data.get("status", {}).get("brightness"),
     ),
 )
 
