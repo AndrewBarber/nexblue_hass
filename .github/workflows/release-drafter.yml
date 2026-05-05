@@ -8,6 +8,9 @@ jobs:
   draft_release:
     name: Release Drafter
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - name: Run release-drafter
         uses: release-drafter/release-drafter@v7.2.1
