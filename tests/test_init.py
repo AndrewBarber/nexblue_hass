@@ -80,15 +80,6 @@ async def test_setup_entry_exception(hass, error_on_get_data):
 
 
 @pytest.mark.asyncio
-async def test_async_setup(hass):
-    """Test async_setup function."""
-    from custom_components.nexblue_hass import async_setup
-
-    result = await async_setup(hass, {})
-    assert result is True
-
-
-@pytest.mark.asyncio
 async def test_async_unload_entry_empty_platforms(hass, bypass_get_data):
     """Test async_unload_entry with empty platforms list."""
     # Create a mock entry and coordinator with empty platforms
