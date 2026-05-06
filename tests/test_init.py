@@ -101,3 +101,35 @@ async def test_async_unload_entry_empty_platforms(hass, bypass_get_data):
         # Test unload with empty platforms (should hit line 100: unloaded = True)
         result = await async_unload_entry(hass, config_entry)
         assert result is True
+
+
+@pytest.mark.asyncio
+async def test_coordinator_enriches_charger_data(hass):
+    """Test coordinator _async_update_data enriches chargers with energy_today and last_session."""
+    config_entry = MockConfigEntry(domain=DOMAIN, data=MOCK_CONFIG, entry_id="test")
+
+    with (
+        patch(
+            "custom_components.nexblue_hass.NexBlueApiClient.async_get_data",
+            return_value={"chargers": [{"serial_number": "TEST123"}]},
+        ),
+        patch(
+            "custom_components.nexblue_hass.NexBlueApiClient.async_get_energy_today",
+            return_value=5.5,
+        ),
+        patch(
+            "custom_components.nexblue_hass.NexBlueApiClient.async_get_last_session",
+            return_value={"consumption": 8.4},
+        ),
+        patch(
+            "homeassistant.config_entries.ConfigEntries.async_forward_entry_setups",
+            return_value=None,
+        ),
+    ):
+        await async_setup_entry(hass, config_entry)
+        coordinator = hass.data[DOMAIN][config_entry.entry_id]
+        data = await coordinator._async_update_data()
+
+    charger = data["chargers"][0]
+    assert charger["energy_today"] == 5.5
+    assert charger["last_session"] == {"consumption": 8.4}

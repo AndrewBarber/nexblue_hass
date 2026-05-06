@@ -2,6 +2,7 @@
 
 import asyncio
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import aiohttp
 import pytest
@@ -532,6 +533,23 @@ async def test_api_wrapper_exception(hass, aioclient_mock, caplog):
 
 
 @pytest.mark.asyncio
+async def test_api_wrapper_key_error(hass, aioclient_mock, caplog):
+    """Test API wrapper KeyError/TypeError exception handling (lines 419-424)."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+
+    aioclient_mock.get(
+        "https://api.nexblue.com/third_party/openapi/chargers",
+        exc=KeyError("missing_key"),
+    )
+
+    result = await api.api_wrapper(
+        "get", "https://api.nexblue.com/third_party/openapi/chargers"
+    )
+    assert result is None
+    assert "Error parsing information from" in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_api_empty_chargers_data(hass, aioclient_mock, caplog):
     """Test API with empty chargers data response."""
     api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
@@ -880,3 +898,73 @@ async def test_api_no_refresh_token(hass, aioclient_mock, caplog):
 
     result = await api.async_ensure_token_valid()
     assert result is True
+
+
+@pytest.mark.asyncio
+async def test_api_start_charging_exception(hass, aioclient_mock, caplog):
+    """Test start charging except Exception path."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._refresh_token = "test_refresh"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    with patch.object(api, "api_wrapper", side_effect=Exception("boom")):
+        result = await api.async_start_charging("test123")
+    assert result is False
+    assert "Error starting charging session" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_api_stop_charging_exception(hass, aioclient_mock, caplog):
+    """Test stop charging except Exception path."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._refresh_token = "test_refresh"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    with patch.object(api, "api_wrapper", side_effect=Exception("boom")):
+        result = await api.async_stop_charging("test123")
+    assert result is False
+    assert "Error stopping charging session" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_api_set_current_limit_exception(hass, aioclient_mock, caplog):
+    """Test set current limit except Exception path."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._refresh_token = "test_refresh"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    with patch.object(api, "api_wrapper", side_effect=Exception("boom")):
+        result = await api.async_set_current_limit("test123", 16)
+    assert result is False
+    assert "Error setting current limit" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_api_get_energy_today_exception(hass, aioclient_mock, caplog):
+    """Test get energy today except Exception path."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._refresh_token = "test_refresh"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    with patch.object(api, "api_wrapper", side_effect=Exception("boom")):
+        result = await api.async_get_energy_today("test123")
+    assert result is None
+    assert "Error fetching energy data" in caplog.text
+
+
+@pytest.mark.asyncio
+async def test_api_get_last_session_exception(hass, aioclient_mock, caplog):
+    """Test get last session except Exception path."""
+    api = NexBlueApiClient("test", "test", async_get_clientsession(hass))
+    api._access_token = "test_token"
+    api._refresh_token = "test_refresh"
+    api._token_expires_at = datetime.now() + timedelta(hours=1)
+
+    with patch.object(api, "api_wrapper", side_effect=Exception("boom")):
+        result = await api.async_get_last_session("test123")
+    assert result is None
+    assert "Error fetching session data" in caplog.text

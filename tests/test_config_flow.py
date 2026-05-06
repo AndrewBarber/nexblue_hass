@@ -301,3 +301,24 @@ async def test_options_flow_with_existing_options(mock_config_entry):
     schema = result["data_schema"].schema
     for platform in sorted(PLATFORMS):
         assert platform in schema
+
+
+@pytest.mark.asyncio
+async def test_update_options_direct(mock_config_entry):
+    """Test _update_options directly to cover config_flow.py line 118."""
+
+    class _TestFlow(NexBlueOptionsFlowHandler):
+        @property
+        def config_entry(self):
+            return mock_config_entry
+
+    flow = object.__new__(_TestFlow)
+    flow.options = {"switch": True}
+    flow.async_create_entry = MagicMock(
+        return_value={"type": "create_entry", "title": "test", "data": {"switch": True}}
+    )
+    result = await flow._update_options()
+    flow.async_create_entry.assert_called_once_with(
+        title=mock_config_entry.data.get("username"), data={"switch": True}
+    )
+    assert result["type"] == "create_entry"
