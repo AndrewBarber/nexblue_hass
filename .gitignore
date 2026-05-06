@@ -43,3 +43,12 @@ debug/*
 
 # Ruff cache
 .ruff_cache/
+
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Virtual environments (alternate names)
+nexblue_venv_py13/

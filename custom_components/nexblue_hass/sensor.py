@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -13,6 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    PERCENTAGE,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
@@ -52,6 +54,37 @@ CABLE_LOCK_MODE_MAP = {
     1: "Always Locked",
 }
 
+# Mapping of network status values to human-readable strings
+NETWORK_STATUS_MAP = {
+    0: "None",
+    1: "WiFi",
+    2: "LTE",
+    3: "Ethernet",
+}
+
+# Mapping of plug_and_charging (access level) values
+ACCESS_LEVEL_MAP = {
+    0: "Authorized Users Only",
+    1: "No Restrictions",
+}
+
+# Mapping of force_single (phase charging mode) values
+PHASE_MODE_MAP = {
+    0: "Three Phase",
+    1: "Single Phase",
+}
+
+
+def _current_from_list(data: dict[str, Any], index: int) -> StateType:
+    """Safely pull a current value from the API's current_list."""
+    current_list = data.get("status", {}).get("current_list")
+    if not isinstance(current_list, list) or len(current_list) <= index:
+        return None
+    try:
+        return float(current_list[index])
+    except (TypeError, ValueError):
+        return None
+
 
 def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
     """Safely pull a voltage value from the API's voltage_list."""
@@ -61,6 +94,18 @@ def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
     try:
         return float(voltage_list[index])
     except (TypeError, ValueError):
+        return None
+
+
+def _unix_to_datetime(data: dict[str, Any], key: str) -> datetime | None:
+    """Convert a Unix timestamp from last_session to a UTC-aware datetime."""
+    ts = data.get("last_session") or {}
+    val = ts.get(key)
+    if val is None:
+        return None
+    try:
+        return datetime.fromtimestamp(int(val), tz=UTC)
+    except (TypeError, ValueError, OSError):
         return None
 
 
@@ -115,7 +160,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         name="Network Status",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:wifi",
-        value_fn=lambda data: {0: "None", 1: "WiFi", 2: "LTE"}.get(
+        value_fn=lambda data: NETWORK_STATUS_MAP.get(
             data.get("status", {}).get("network_status"), "Unknown"
         ),
     ),
@@ -147,13 +192,91 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         value_fn=lambda data: _voltage_from_list(data, 2),
     ),
     NexBlueSensorEntityDescription(
+        key="current_l1",
+        name="Current L1",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 0),
+    ),
+    NexBlueSensorEntityDescription(
+        key="current_l2",
+        name="Current L2",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 1),
+    ),
+    NexBlueSensorEntityDescription(
+        key="current_l3",
+        name="Current L3",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:current-ac",
+        value_fn=lambda data: _current_from_list(data, 2),
+    ),
+    NexBlueSensorEntityDescription(
+        key="circuit_fuse",
+        name="Circuit Fuse",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:fuse",
+        value_fn=lambda data: data.get("status", {}).get("circuit_fuse"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_start",
+        name="Last Session Start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-start",
+        value_fn=lambda data: _unix_to_datetime(data, "start_timestamp"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_end",
+        name="Last Session End",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-end",
+        value_fn=lambda data: _unix_to_datetime(data, "end_timestamp"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_energy",
+        name="Last Session Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:lightning-bolt",
+        value_fn=lambda data: (data.get("last_session") or {}).get("consumption"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_stop_reason",
+        name="Last Session Stop Reason",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+        value_fn=lambda data: (data.get("last_session") or {}).get("stop_reason"),
+    ),
+    NexBlueSensorEntityDescription(
         key="cable_lock_mode",
         name="Cable Lock Mode",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lock",
         value_fn=lambda data: CABLE_LOCK_MODE_MAP.get(
-            data.get("status", {}).get("is_always_lock"), "Unknown"
+            data.get("status", {}).get("cable_lock_mode"), "Unknown"
         ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="energy_today",
+        name="Energy Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL,
+        icon="mdi:lightning-bolt",
+        value_fn=lambda data: data.get("energy_today"),
     ),
     NexBlueSensorEntityDescription(
         key="cable_current",
@@ -163,7 +286,50 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:current-ac",
-        value_fn=lambda data: data.get("status", {}).get("cable_current"),
+        value_fn=lambda data: data.get("status", {}).get("cable_current_limit"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="brightness",
+        name="LED Brightness",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:brightness-percent",
+        value_fn=lambda data: data.get("status", {}).get("brightness"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="access_level",
+        name="Access Level",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:account-lock",
+        value_fn=lambda data: ACCESS_LEVEL_MAP.get(
+            data.get("status", {}).get("access_level"), "Unknown"
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="phase_mode",
+        name="Phase Mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:sine-wave",
+        value_fn=lambda data: PHASE_MODE_MAP.get(
+            data.get("status", {}).get("phase_charging"), "Unknown"
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="uk_reg",
+        name="UK Regulation Mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:flag",
+        value_fn=lambda data: {True: "Enabled", False: "Disabled"}.get(
+            data.get("status", {}).get("uk_reg")
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="protocol_version",
+        name="Protocol Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+        value_fn=lambda data: data.get("status", {}).get("protocol_version"),
     ),
 )
 

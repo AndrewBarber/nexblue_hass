@@ -3,7 +3,7 @@
 import asyncio
 import logging
 import socket
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Dict, Optional
 
 import aiohttp
@@ -272,11 +272,87 @@ class NexBlueApiClient:
             _LOGGER.error("Error setting current limit: %s", ex)
             return False
 
+    async def async_get_energy_today(self, charger_serial: str) -> Optional[float]:
+        """Get today's total energy consumption in kWh for a charger."""
+        if not await self.async_ensure_token_valid():
+            _LOGGER.error("Failed to authenticate with NexBlue API")
+            return None
+
+        try:
+            now = datetime.now(UTC)
+            from_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            to_date = now.replace(hour=23, minute=59, second=59, microsecond=0)
+
+            measurement_url = (
+                f"{API_BASE_URL}/measurement/chargers/{charger_serial}"
+                f"?from_date={from_date.strftime('%Y-%m-%dT%H:%M:%S')}"
+                f"&to_date={to_date.strftime('%Y-%m-%dT%H:%M:%S')}"
+                f"&granularity=daily"
+            )
+            response = await self.api_wrapper("get", measurement_url)
+
+            if response and "total" in response:
+                return float(response["total"])
+
+            _LOGGER.debug("No energy data for charger %s: %s", charger_serial, response)
+            return None
+
+        except Exception as ex:
+            _LOGGER.error(
+                "Error fetching energy data for charger %s: %s", charger_serial, ex
+            )
+            return None
+
+    async def async_get_last_session(
+        self, charger_serial: str
+    ) -> Optional[Dict[str, Any]]:
+        """Get the most recent charging session for a charger."""
+        if not await self.async_ensure_token_valid():
+            _LOGGER.error("Failed to authenticate with NexBlue API")
+            return None
+
+        try:
+            now = datetime.now(UTC)
+            from_date = (now - timedelta(days=30)).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+
+            sessions_url = f"{API_BASE_URL}/sessions/charger/{charger_serial}"
+            response = await self.api_wrapper(
+                "get",
+                sessions_url,
+                params={
+                    "from_date": from_date.strftime("%Y-%m-%dT%H:%M:%S"),
+                    "to_date": now.strftime("%Y-%m-%dT%H:%M:%S"),
+                },
+            )
+
+            if response and isinstance(response.get("data"), list):
+                sessions = response["data"]
+                if sessions:
+                    return max(sessions, key=lambda s: s.get("start_timestamp", 0))
+
+            _LOGGER.debug(
+                "No session data for charger %s: %s", charger_serial, response
+            )
+            return None
+
+        except Exception as ex:
+            _LOGGER.error(
+                "Error fetching session data for charger %s: %s", charger_serial, ex
+            )
+            return None
+
     # Note: Advanced features like get_schedule removed for v1
     # to focus on essential functionality and safety
 
     async def api_wrapper(
-        self, method: str, url: str, data: dict = None, headers: dict = None
+        self,
+        method: str,
+        url: str,
+        data: dict = None,
+        headers: dict = None,
+        params: dict = None,
     ) -> Optional[Dict[str, Any]]:
         """Get information from the API."""
         method = method.lower()
@@ -297,7 +373,9 @@ class NexBlueApiClient:
                     # Remove Content-Type for GET requests to avoid servers expecting a body
                     get_headers = headers.copy()
                     get_headers.pop("Content-Type", None)
-                    response = await self._session.get(url, headers=get_headers)
+                    response = await self._session.get(
+                        url, headers=get_headers, params=params
+                    )
 
                 elif method == "post":
                     response = await self._session.post(url, headers=headers, json=data)
