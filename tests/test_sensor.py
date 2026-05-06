@@ -7,10 +7,15 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.nexblue_hass.const import DOMAIN
 from custom_components.nexblue_hass.sensor import (
+    ACCESS_LEVEL_MAP,
     CABLE_LOCK_MODE_MAP,
     CHARGING_STATE_MAP,
+    NETWORK_STATUS_MAP,
+    PHASE_MODE_MAP,
     SENSOR_TYPES,
     NexBlueSensor,
+    _current_from_list,
+    _unix_to_datetime,
     _voltage_from_list,
     async_setup_entry,
 )
@@ -35,8 +40,23 @@ def mock_coordinator():
                     "current_limit": 16,
                     "network_status": 1,
                     "voltage_list": [230.5, 231.2, 229.8],
-                    "is_always_lock": 1,
-                    "cable_current": 32,
+                    "current_list": [12.5, 13.1, 12.8],
+                    "circuit_fuse": 32,
+                    "cable_lock_mode": 1,
+                    "cable_current_limit": 32,
+                    "brightness": 75,
+                    "access_level": 0,
+                    "phase_charging": 1,
+                    "uk_reg": True,
+                    "protocol_version": "OCPP1.6",
+                },
+                "energy_today": 5.6,
+                "last_session": {
+                    "start_timestamp": 1746489600,
+                    "end_timestamp": 1746496800,
+                    "consumption": 8.4,
+                    "stop_reason": "EVDisconnected",
+                    "start_reason": "Remote",
                 },
                 "model": "EV Charger Model X",
                 "firmware_version": "1.0.0",
@@ -66,8 +86,8 @@ async def test_sensor_setup_entry(mock_coordinator, mock_config_entry):
     # Verify that sensors were added
     async_add_entities.assert_called_once()
     sensors = async_add_entities.call_args[0][0]
-    # Should create 11 sensors for 1 charger (added 2 cable lock sensors)
-    assert len(sensors) == 11
+    # Should create 25 sensors for 1 charger
+    assert len(sensors) == 25
     for sensor in sensors:
         assert isinstance(sensor, NexBlueSensor)
 
@@ -216,6 +236,10 @@ def test_sensor_network_status_values(mock_coordinator, mock_config_entry):
     description = SENSOR_TYPES[5]  # network_status sensor
     sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", description)
 
+    # Test None
+    mock_coordinator.data["chargers"][0]["status"]["network_status"] = 0
+    assert sensor.native_value == "None"
+
     # Test WiFi
     mock_coordinator.data["chargers"][0]["status"]["network_status"] = 1
     assert sensor.native_value == "WiFi"
@@ -223,6 +247,10 @@ def test_sensor_network_status_values(mock_coordinator, mock_config_entry):
     # Test LTE
     mock_coordinator.data["chargers"][0]["status"]["network_status"] = 2
     assert sensor.native_value == "LTE"
+
+    # Test Ethernet
+    mock_coordinator.data["chargers"][0]["status"]["network_status"] = 3
+    assert sensor.native_value == "Ethernet"
 
     # Test unknown
     mock_coordinator.data["chargers"][0]["status"]["network_status"] = 99
@@ -296,6 +324,78 @@ def test_voltage_from_list_invalid_values():
     assert result is None
 
 
+def test_network_status_map():
+    """Test NETWORK_STATUS_MAP contains all expected values."""
+    expected = {0: "None", 1: "WiFi", 2: "LTE", 3: "Ethernet"}
+    assert NETWORK_STATUS_MAP == expected
+
+
+def test_current_from_list_valid():
+    """Test _current_from_list with valid data."""
+    data = {"status": {"current_list": [12.5, 13.1, 12.8]}}
+    assert _current_from_list(data, 0) == 12.5
+    assert _current_from_list(data, 2) == 12.8
+
+
+def test_current_from_list_invalid_index():
+    """Test _current_from_list with out-of-range index."""
+    data = {"status": {"current_list": [12.5, 13.1]}}
+    assert _current_from_list(data, 2) is None
+
+
+def test_current_from_list_no_current_list():
+    """Test _current_from_list with missing current_list."""
+    data = {"status": {}}
+    assert _current_from_list(data, 0) is None
+
+
+def test_current_from_list_not_a_list():
+    """Test _current_from_list when current_list is not a list."""
+    data = {"status": {"current_list": "not_a_list"}}
+    assert _current_from_list(data, 0) is None
+
+
+def test_current_from_list_invalid_values():
+    """Test _current_from_list with invalid values."""
+    data = {"status": {"current_list": [12.5, "bad", None]}}
+    assert _current_from_list(data, 1) is None
+    assert _current_from_list(data, 2) is None
+
+
+def test_sensor_current_phase_values(mock_coordinator, mock_config_entry):
+    """Test per-phase current sensor values."""
+    for key, index, expected in [
+        ("current_l1", None, 12.5),
+        ("current_l2", None, 13.1),
+        ("current_l3", None, 12.8),
+    ]:
+        sensor_type = next(s for s in SENSOR_TYPES if s.key == key)
+        sensor = NexBlueSensor(
+            mock_coordinator, mock_config_entry, "test123", sensor_type
+        )
+        assert sensor.native_value == expected
+        assert sensor.native_unit_of_measurement == "A"
+
+
+def test_sensor_circuit_fuse(mock_coordinator, mock_config_entry):
+    """Test circuit fuse sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "circuit_fuse")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 32
+    assert sensor.native_unit_of_measurement == "A"
+    assert sensor.name == "NexBlue test123 Circuit Fuse"
+    assert sensor.unique_id == "test_test123_circuit_fuse"
+
+
+def test_sensor_circuit_fuse_missing(mock_coordinator, mock_config_entry):
+    """Test circuit fuse sensor when data is missing."""
+    mock_coordinator.data["chargers"][0]["status"].pop("circuit_fuse")
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "circuit_fuse")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+    assert sensor.native_value is None
+
+
 def test_charging_state_map():
     """Test CHARGING_STATE_MAP contains all expected values."""
     expected_states = {
@@ -314,7 +414,7 @@ def test_charging_state_map():
 
 def test_sensor_types_count():
     """Test that SENSOR_TYPES contains expected number of sensors."""
-    assert len(SENSOR_TYPES) == 11  # Added 2 cable lock sensors
+    assert len(SENSOR_TYPES) == 25
 
 
 def test_sensor_types_structure():
@@ -356,7 +456,7 @@ def test_cable_lock_mode_sensor(mock_coordinator, mock_config_entry):
 def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_entry):
     """Test cable lock mode sensor with different values."""
     # Test with lock_while_charging mode
-    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
 
     cable_lock_mode_sensor = None
     for sensor_type in SENSOR_TYPES:
@@ -369,7 +469,7 @@ def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_e
     assert cable_lock_mode_sensor.native_value == "Lock While Charging"
 
     # Test with unknown mode
-    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 99
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
     assert cable_lock_mode_sensor.native_value == "Unknown"
 
 
@@ -394,7 +494,7 @@ def test_cable_current_sensor(mock_coordinator, mock_config_entry):
 def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
     """Test cable current sensor when cable is not plugged."""
     # Test with cable not plugged (0A)
-    mock_coordinator.data["chargers"][0]["status"]["cable_current"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["cable_current_limit"] = 0
 
     cable_current_sensor = None
     for sensor_type in SENSOR_TYPES:
@@ -405,6 +505,198 @@ def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
             break
 
     assert cable_current_sensor.native_value == 0
+
+
+def test_brightness_sensor(mock_coordinator, mock_config_entry):
+    """Test LED brightness sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "brightness")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 75
+    assert sensor.native_unit_of_measurement == "%"
+    assert sensor.name == "NexBlue test123 LED Brightness"
+    assert sensor.unique_id == "test_test123_brightness"
+
+
+def test_brightness_sensor_missing(mock_coordinator, mock_config_entry):
+    """Test brightness sensor when data is missing."""
+    mock_coordinator.data["chargers"][0]["status"].pop("brightness")
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "brightness")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+    assert sensor.native_value is None
+
+
+def test_energy_today_sensor(mock_coordinator, mock_config_entry):
+    """Test energy today sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 5.6
+    assert sensor.native_unit_of_measurement == "kWh"
+    assert sensor.name == "NexBlue test123 Energy Today"
+    assert sensor.unique_id == "test_test123_energy_today"
+
+
+def test_energy_today_sensor_missing(mock_coordinator, mock_config_entry):
+    """Test energy today sensor when data is missing."""
+    mock_coordinator.data["chargers"][0].pop("energy_today")
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "energy_today")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+    assert sensor.native_value is None
+
+
+def test_last_session_start_sensor(mock_coordinator, mock_config_entry):
+    """Test last session start timestamp sensor."""
+    from datetime import UTC, datetime
+
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_start")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    expected = datetime.fromtimestamp(1746489600, tz=UTC)
+    assert sensor.native_value == expected
+    assert sensor.name == "NexBlue test123 Last Session Start"
+    assert sensor.unique_id == "test_test123_last_session_start"
+
+
+def test_last_session_end_sensor(mock_coordinator, mock_config_entry):
+    """Test last session end timestamp sensor."""
+    from datetime import UTC, datetime
+
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_end")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    expected = datetime.fromtimestamp(1746496800, tz=UTC)
+    assert sensor.native_value == expected
+
+
+def test_last_session_energy_sensor(mock_coordinator, mock_config_entry):
+    """Test last session energy sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_energy")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == 8.4
+    assert sensor.native_unit_of_measurement == "kWh"
+    assert sensor.name == "NexBlue test123 Last Session Energy"
+    assert sensor.unique_id == "test_test123_last_session_energy"
+
+
+def test_last_session_stop_reason_sensor(mock_coordinator, mock_config_entry):
+    """Test last session stop reason sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "last_session_stop_reason")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "EVDisconnected"
+    assert sensor.name == "NexBlue test123 Last Session Stop Reason"
+
+
+def test_last_session_sensors_no_data(mock_coordinator, mock_config_entry):
+    """Test last session sensors when no session data is available."""
+    mock_coordinator.data["chargers"][0]["last_session"] = None
+
+    for key in (
+        "last_session_start",
+        "last_session_end",
+        "last_session_energy",
+        "last_session_stop_reason",
+    ):
+        sensor_type = next(s for s in SENSOR_TYPES if s.key == key)
+        sensor = NexBlueSensor(
+            mock_coordinator, mock_config_entry, "test123", sensor_type
+        )
+        assert sensor.native_value is None
+
+
+def test_unix_to_datetime_valid():
+    """Test _unix_to_datetime with a valid timestamp."""
+    from datetime import UTC, datetime
+
+    data = {"last_session": {"start_timestamp": 1746489600}}
+    result = _unix_to_datetime(data, "start_timestamp")
+    assert result == datetime.fromtimestamp(1746489600, tz=UTC)
+
+
+def test_unix_to_datetime_missing_key():
+    """Test _unix_to_datetime when key is absent."""
+    data = {"last_session": {}}
+    assert _unix_to_datetime(data, "start_timestamp") is None
+
+
+def test_unix_to_datetime_no_session():
+    """Test _unix_to_datetime when last_session is None."""
+    data = {"last_session": None}
+    assert _unix_to_datetime(data, "start_timestamp") is None
+
+
+def test_unix_to_datetime_invalid_value():
+    """Test _unix_to_datetime with non-numeric value."""
+    data = {"last_session": {"start_timestamp": "not-a-number"}}
+    assert _unix_to_datetime(data, "start_timestamp") is None
+
+
+def test_access_level_map():
+    """Test ACCESS_LEVEL_MAP contains expected values."""
+    assert ACCESS_LEVEL_MAP == {0: "Authorized Users Only", 1: "No Restrictions"}
+
+
+def test_phase_mode_map():
+    """Test PHASE_MODE_MAP contains expected values."""
+    assert PHASE_MODE_MAP == {0: "Three Phase", 1: "Single Phase"}
+
+
+def test_access_level_sensor(mock_coordinator, mock_config_entry):
+    """Test access level sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "access_level")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "Authorized Users Only"
+    assert sensor.name == "NexBlue test123 Access Level"
+    assert sensor.unique_id == "test_test123_access_level"
+
+
+def test_phase_mode_sensor(mock_coordinator, mock_config_entry):
+    """Test phase mode sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "phase_mode")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "Single Phase"
+    assert sensor.name == "NexBlue test123 Phase Mode"
+
+
+def test_uk_reg_sensor(mock_coordinator, mock_config_entry):
+    """Test UK regulation mode sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "uk_reg")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "Enabled"
+    assert sensor.name == "NexBlue test123 UK Regulation Mode"
+
+
+def test_protocol_version_sensor(mock_coordinator, mock_config_entry):
+    """Test protocol version sensor."""
+    sensor_type = next(s for s in SENSOR_TYPES if s.key == "protocol_version")
+    sensor = NexBlueSensor(mock_coordinator, mock_config_entry, "test123", sensor_type)
+
+    assert sensor.native_value == "OCPP1.6"
+    assert sensor.name == "NexBlue test123 Protocol Version"
+
+
+def test_config_sensors_missing_status(mock_coordinator, mock_config_entry):
+    """Test config sensors fall back gracefully when status fields are absent."""
+    status = mock_coordinator.data["chargers"][0]["status"]
+    for field in ("access_level", "phase_charging", "uk_reg", "protocol_version"):
+        status.pop(field)
+
+    for key, expected in (
+        ("access_level", "Unknown"),
+        ("phase_mode", "Unknown"),
+        ("uk_reg", None),  # None key not in {True: ..., False: ...}
+        ("protocol_version", None),
+    ):
+        sensor_type = next(s for s in SENSOR_TYPES if s.key == key)
+        sensor = NexBlueSensor(
+            mock_coordinator, mock_config_entry, "test123", sensor_type
+        )
+        assert sensor.native_value == expected
 
 
 def test_cable_lock_sensors_no_status(mock_coordinator, mock_config_entry):
