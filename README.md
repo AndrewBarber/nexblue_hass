@@ -14,8 +14,6 @@
 
 This unofficial integration connects your [NexBlue](https://nexblue.com/) EV charging devices to Home Assistant, allowing you to monitor and control your chargers from your smart home dashboard.
 
-![example][exampleimg]
-
 ## ✨ Features
 
 **This integration sets up the following platforms:**
@@ -153,7 +151,6 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [commits]: https://github.com/AndrewBarber/nexblue_hass/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[exampleimg]: example.png
 [license-shield]: https://img.shields.io/github/license/AndrewBarber/nexblue_hass.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40AndrewBarber-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/AndrewBarber/nexblue_hass.svg?style=for-the-badge
