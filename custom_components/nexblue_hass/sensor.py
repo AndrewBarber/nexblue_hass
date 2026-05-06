@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -81,6 +82,18 @@ def _voltage_from_list(data: dict[str, Any], index: int) -> StateType:
     try:
         return float(voltage_list[index])
     except (TypeError, ValueError):
+        return None
+
+
+def _unix_to_datetime(data: dict[str, Any], key: str) -> datetime | None:
+    """Convert a Unix timestamp from last_session to a UTC-aware datetime."""
+    ts = data.get("last_session") or {}
+    val = ts.get(key)
+    if val is None:
+        return None
+    try:
+        return datetime.fromtimestamp(int(val), tz=UTC)
+    except (TypeError, ValueError, OSError):
         return None
 
 
@@ -202,6 +215,38 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:fuse",
         value_fn=lambda data: data.get("status", {}).get("circuit_fuse"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_start",
+        name="Last Session Start",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-start",
+        value_fn=lambda data: _unix_to_datetime(data, "start_timestamp"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_end",
+        name="Last Session End",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:clock-end",
+        value_fn=lambda data: _unix_to_datetime(data, "end_timestamp"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_energy",
+        name="Last Session Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:lightning-bolt",
+        value_fn=lambda data: (data.get("last_session") or {}).get("consumption"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="last_session_stop_reason",
+        name="Last Session Stop Reason",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+        value_fn=lambda data: (data.get("last_session") or {}).get("stop_reason"),
     ),
     NexBlueSensorEntityDescription(
         key="cable_lock_mode",

@@ -82,6 +82,9 @@ class NexBlueDataUpdateCoordinator(DataUpdateCoordinator):
                     charger["energy_today"] = await self.api.async_get_energy_today(
                         serial
                     )
+                    charger["last_session"] = await self.api.async_get_last_session(
+                        serial
+                    )
             return data
         except Exception as exception:
             raise UpdateFailed() from exception
