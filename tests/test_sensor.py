@@ -42,11 +42,11 @@ def mock_coordinator():
                     "voltage_list": [230.5, 231.2, 229.8],
                     "current_list": [12.5, 13.1, 12.8],
                     "circuit_fuse": 32,
-                    "is_always_lock": 1,
-                    "cable_current": 32,
+                    "cable_lock_mode": 1,
+                    "cable_current_limit": 32,
                     "brightness": 75,
-                    "plug_and_charging": 0,
-                    "force_single": 1,
+                    "access_level": 0,
+                    "phase_charging": 1,
                     "uk_reg": True,
                     "protocol_version": "OCPP1.6",
                 },
@@ -456,7 +456,7 @@ def test_cable_lock_mode_sensor(mock_coordinator, mock_config_entry):
 def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_entry):
     """Test cable lock mode sensor with different values."""
     # Test with lock_while_charging mode
-    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 0
 
     cable_lock_mode_sensor = None
     for sensor_type in SENSOR_TYPES:
@@ -469,7 +469,7 @@ def test_cable_lock_mode_sensor_different_values(mock_coordinator, mock_config_e
     assert cable_lock_mode_sensor.native_value == "Lock While Charging"
 
     # Test with unknown mode
-    mock_coordinator.data["chargers"][0]["status"]["is_always_lock"] = 99
+    mock_coordinator.data["chargers"][0]["status"]["cable_lock_mode"] = 99
     assert cable_lock_mode_sensor.native_value == "Unknown"
 
 
@@ -494,7 +494,7 @@ def test_cable_current_sensor(mock_coordinator, mock_config_entry):
 def test_cable_current_sensor_not_plugged(mock_coordinator, mock_config_entry):
     """Test cable current sensor when cable is not plugged."""
     # Test with cable not plugged (0A)
-    mock_coordinator.data["chargers"][0]["status"]["cable_current"] = 0
+    mock_coordinator.data["chargers"][0]["status"]["cable_current_limit"] = 0
 
     cable_current_sensor = None
     for sensor_type in SENSOR_TYPES:
@@ -683,7 +683,7 @@ def test_protocol_version_sensor(mock_coordinator, mock_config_entry):
 def test_config_sensors_missing_status(mock_coordinator, mock_config_entry):
     """Test config sensors fall back gracefully when status fields are absent."""
     status = mock_coordinator.data["chargers"][0]["status"]
-    for field in ("plug_and_charging", "force_single", "uk_reg", "protocol_version"):
+    for field in ("access_level", "phase_charging", "uk_reg", "protocol_version"):
         status.pop(field)
 
     for key, expected in (

@@ -266,7 +266,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:lock",
         value_fn=lambda data: CABLE_LOCK_MODE_MAP.get(
-            data.get("status", {}).get("is_always_lock"), "Unknown"
+            data.get("status", {}).get("cable_lock_mode"), "Unknown"
         ),
     ),
     NexBlueSensorEntityDescription(
@@ -286,7 +286,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:current-ac",
-        value_fn=lambda data: data.get("status", {}).get("cable_current"),
+        value_fn=lambda data: data.get("status", {}).get("cable_current_limit"),
     ),
     NexBlueSensorEntityDescription(
         key="brightness",
@@ -303,7 +303,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:account-lock",
         value_fn=lambda data: ACCESS_LEVEL_MAP.get(
-            data.get("status", {}).get("plug_and_charging"), "Unknown"
+            data.get("status", {}).get("access_level"), "Unknown"
         ),
     ),
     NexBlueSensorEntityDescription(
@@ -312,7 +312,7 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:sine-wave",
         value_fn=lambda data: PHASE_MODE_MAP.get(
-            data.get("status", {}).get("force_single"), "Unknown"
+            data.get("status", {}).get("phase_charging"), "Unknown"
         ),
     ),
     NexBlueSensorEntityDescription(
