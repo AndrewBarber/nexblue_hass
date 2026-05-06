@@ -62,6 +62,18 @@ NETWORK_STATUS_MAP = {
     3: "Ethernet",
 }
 
+# Mapping of plug_and_charging (access level) values
+ACCESS_LEVEL_MAP = {
+    0: "Authorized Users Only",
+    1: "No Restrictions",
+}
+
+# Mapping of force_single (phase charging mode) values
+PHASE_MODE_MAP = {
+    0: "Three Phase",
+    1: "Single Phase",
+}
+
 
 def _current_from_list(data: dict[str, Any], index: int) -> StateType:
     """Safely pull a current value from the API's current_list."""
@@ -284,6 +296,40 @@ SENSOR_TYPES: tuple[NexBlueSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:brightness-percent",
         value_fn=lambda data: data.get("status", {}).get("brightness"),
+    ),
+    NexBlueSensorEntityDescription(
+        key="access_level",
+        name="Access Level",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:account-lock",
+        value_fn=lambda data: ACCESS_LEVEL_MAP.get(
+            data.get("status", {}).get("plug_and_charging"), "Unknown"
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="phase_mode",
+        name="Phase Mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:sine-wave",
+        value_fn=lambda data: PHASE_MODE_MAP.get(
+            data.get("status", {}).get("force_single"), "Unknown"
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="uk_reg",
+        name="UK Regulation Mode",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:flag",
+        value_fn=lambda data: {True: "Enabled", False: "Disabled"}.get(
+            data.get("status", {}).get("uk_reg")
+        ),
+    ),
+    NexBlueSensorEntityDescription(
+        key="protocol_version",
+        name="Protocol Version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+        value_fn=lambda data: data.get("status", {}).get("protocol_version"),
     ),
 )
 
