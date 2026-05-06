@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-05-06
+
+### Changed
+
+- Remove `ignore: brands` from HACS action to meet HACS default store submission requirements
+- Update `info.md` with accurate platform descriptions and correct repository URLs
+- Bump version across `manifest.json` and `const.py`
+
+## [0.4.3] - 2026-05-06
+
+### Improved
+
+- 100% test coverage across all modules
+
+## [0.4.2] - 2026-05-06
+
+### Fixed
+
+- Updated integration icon to match NexBlue branding
+
+## [0.4.1] - 2026-05-06
+
+### Fixed
+
+- Renamed `brands/` to `brand/` so the integration icon displays correctly in HA 2026.3+ and HACS
+
+## [0.4.0] - 2026-05-06
+
+### Added
+
+- **Last Session sensors (diagnostic):** Last Session Start/End timestamps, Last Session Energy (kWh), Last Session Stop Reason
+- **Charger configuration sensors (diagnostic):** Access Level, Phase Mode, UK Regulation Mode, Protocol Version
+- **Energy Today** sensor (kWh, daily total — compatible with HA Energy Dashboard)
+- NexBlue-style integration icon
+- Full README rewrite with complete entity list and HACS quick-add button
+
+### Fixed
+
+- Corrected API field names verified against live API: `cable_lock_mode`, `cable_current_limit`, `access_level`, `phase_charging`
+
+## [0.3.3] - 2026-05-05
+
+### Changed
+
+- Replace `async_timeout` with built-in `asyncio.timeout` (Python 3.11+)
+- Remove unused `Config` import and redundant `async_setup` no-op from `__init__.py`
+- Remove `aiohttp` from `manifest.json` requirements (it is a HA core dependency)
+
+## [0.3.2] - 2026-05-05
+
+### Fixed
+
+- Fix Hassfest CI failure caused by URL in `translations/en.json` description string
+- Fix test runner crash (`AttributeError: module 'pycares'`) by bumping `pytest-homeassistant-custom-component` to 0.13.316
+- Sync `VERSION` constant in `const.py` to match `manifest.json`
+
+### Changed
+
+- Dependency updates: `pytest-homeassistant-custom-component`, `pip`, `coverage`, `ruff`, and various GitHub Actions
+
 ## [0.3.1] - 2025-12-06
 
 ### Fixed
@@ -76,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved GitHub Issue #21: "Charging current limit" feature request
 - Users can now adjust charging current limit directly from Home Assistant UI
 
-## [0.1.0] - Initial Release
+## [0.1.0] - 2025-07-13
 
 ### Added
 
