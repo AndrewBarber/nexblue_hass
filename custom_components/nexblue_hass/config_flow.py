@@ -28,11 +28,26 @@ class NexBlueFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle a flow initialized by the user."""
         self._errors = {}
 
-        # Uncomment the next 2 lines if only a single instance of the integration is allowed:
-        # if self._async_current_entries():
-        #     return self.async_abort(reason="single_instance_allowed")
-
         if user_input is not None:
+            username = user_input[CONF_USERNAME].strip()
+            user_input = {**user_input, CONF_USERNAME: username}
+            if not username:
+                self._errors[CONF_USERNAME] = "username_required"
+                return await self._show_config_form(user_input)
+
+            normalized_username = username.casefold()
+
+            for entry in self._async_current_entries():
+                configured_username = entry.data.get(CONF_USERNAME)
+                if (
+                    isinstance(configured_username, str)
+                    and configured_username.strip().casefold() == normalized_username
+                ):
+                    return self.async_abort(reason="already_configured")
+
+            await self.async_set_unique_id(normalized_username)
+            self._abort_if_unique_id_configured()
+
             valid = await self._test_credentials(
                 user_input[CONF_USERNAME], user_input[CONF_PASSWORD]
             )

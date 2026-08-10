@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from homeassistant import config_entries
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.nexblue_hass.config_flow import (
     NexBlueFlowHandler,
@@ -12,6 +13,7 @@ from custom_components.nexblue_hass.config_flow import (
 from custom_components.nexblue_hass.const import (
     CONF_PASSWORD,
     CONF_USERNAME,
+    DOMAIN,
     PLATFORMS,
 )
 
@@ -66,7 +68,12 @@ async def test_async_step_user_valid_credentials(mock_hass):
     user_input = {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "password123"}
 
     # Mock successful credential test
-    with patch.object(flow_handler, "_test_credentials", return_value=True):
+    with (
+        patch.object(flow_handler, "_async_current_entries", return_value=[]),
+        patch.object(flow_handler, "async_set_unique_id", new_callable=AsyncMock),
+        patch.object(flow_handler, "_abort_if_unique_id_configured"),
+        patch.object(flow_handler, "_test_credentials", return_value=True),
+    ):
         result = await flow_handler.async_step_user(user_input)
 
     assert result["type"] == "create_entry"
@@ -83,12 +90,137 @@ async def test_async_step_user_invalid_credentials(mock_hass):
     user_input = {CONF_USERNAME: "test@example.com", CONF_PASSWORD: "wrongpassword"}
 
     # Mock failed credential test
-    with patch.object(flow_handler, "_test_credentials", return_value=False):
+    with (
+        patch.object(flow_handler, "_async_current_entries", return_value=[]),
+        patch.object(flow_handler, "async_set_unique_id", new_callable=AsyncMock),
+        patch.object(flow_handler, "_abort_if_unique_id_configured"),
+        patch.object(flow_handler, "_test_credentials", return_value=False),
+    ):
         result = await flow_handler.async_step_user(user_input)
 
     assert result["type"] == "form"
     assert result["step_id"] == "user"
     assert result["errors"]["base"] == "auth"
+
+
+@pytest.mark.asyncio
+async def test_async_step_user_empty_username_returns_form_error(mock_hass):
+    """Test async_step_user rejects usernames containing only whitespace."""
+    flow_handler = NexBlueFlowHandler()
+    flow_handler.hass = mock_hass
+
+    user_input = {CONF_USERNAME: "   ", CONF_PASSWORD: "password123"}
+
+    with (
+        patch.object(flow_handler, "_async_current_entries") as mock_current_entries,
+        patch.object(
+            flow_handler, "async_set_unique_id", new_callable=AsyncMock
+        ) as mock_set_unique_id,
+        patch.object(
+            flow_handler, "_abort_if_unique_id_configured"
+        ) as mock_abort_if_configured,
+        patch.object(flow_handler, "_test_credentials") as mock_test_credentials,
+    ):
+        result = await flow_handler.async_step_user(user_input)
+
+    assert result["type"] == "form"
+    assert result["step_id"] == "user"
+    assert result["errors"][CONF_USERNAME] == "username_required"
+    mock_current_entries.assert_not_called()
+    mock_set_unique_id.assert_not_called()
+    mock_abort_if_configured.assert_not_called()
+    mock_test_credentials.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_async_step_user_normalizes_unique_id(mock_hass):
+    """Test async_step_user normalizes the duplicate-checking unique ID."""
+    flow_handler = NexBlueFlowHandler()
+    flow_handler.hass = mock_hass
+
+    user_input = {CONF_USERNAME: " Test@Example.COM ", CONF_PASSWORD: "password123"}
+
+    with (
+        patch.object(flow_handler, "_async_current_entries", return_value=[]),
+        patch.object(
+            flow_handler, "async_set_unique_id", new_callable=AsyncMock
+        ) as mock_set_unique_id,
+        patch.object(
+            flow_handler, "_abort_if_unique_id_configured"
+        ) as mock_abort_if_configured,
+        patch.object(
+            flow_handler, "_test_credentials", return_value=True
+        ) as mock_test_credentials,
+    ):
+        result = await flow_handler.async_step_user(user_input)
+
+    assert result["type"] == "create_entry"
+    assert result["title"] == "NexBlue (Test@Example.COM)"
+    assert result["data"][CONF_USERNAME] == "Test@Example.COM"
+    mock_set_unique_id.assert_awaited_once_with("test@example.com")
+    mock_abort_if_configured.assert_called_once()
+    mock_test_credentials.assert_awaited_once_with("Test@Example.COM", "password123")
+
+
+@pytest.mark.asyncio
+async def test_async_step_user_duplicate_username_aborts(
+    hass, enable_custom_integrations
+):
+    """Test duplicate NexBlue accounts are aborted before authentication."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="test@example.com",
+        data={CONF_USERNAME: "test@example.com", CONF_PASSWORD: "old_password"},
+    )
+    config_entry.add_to_hass(hass)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    assert result["type"] == "form"
+
+    with patch(
+        "custom_components.nexblue_hass.config_flow.NexBlueApiClient"
+    ) as mock_client_class:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: " Test@Example.COM ", CONF_PASSWORD: "password123"},
+        )
+
+    assert result["type"] == "abort"
+    assert result["reason"] == "already_configured"
+    mock_client_class.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_async_step_user_duplicate_legacy_username_aborts(
+    hass, enable_custom_integrations
+):
+    """Test duplicate old entries without unique IDs are aborted by username."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_USERNAME: "Test@Example.COM", CONF_PASSWORD: "old_password"},
+    )
+    config_entry.add_to_hass(hass)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+
+    assert result["type"] == "form"
+
+    with patch(
+        "custom_components.nexblue_hass.config_flow.NexBlueApiClient"
+    ) as mock_client_class:
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            {CONF_USERNAME: " test@example.com ", CONF_PASSWORD: "password123"},
+        )
+
+    assert result["type"] == "abort"
+    assert result["reason"] == "already_configured"
+    mock_client_class.assert_not_called()
 
 
 @pytest.mark.asyncio
@@ -106,7 +238,11 @@ async def test_async_step_user_credentials_with_error(mock_hass):
 
     with patch.object(
         flow_handler, "_test_credentials", side_effect=mock_test_credentials
-    ):
+    ), patch.object(
+        flow_handler, "_async_current_entries", return_value=[]
+    ), patch.object(
+        flow_handler, "async_set_unique_id", new_callable=AsyncMock
+    ), patch.object(flow_handler, "_abort_if_unique_id_configured"):
         result = await flow_handler.async_step_user(user_input)
 
     assert result["type"] == "form"

@@ -11,9 +11,11 @@
       }
     },
     "error": {
-      "auth": "Identifiant ou mot de passe erroné."
+      "auth": "Identifiant ou mot de passe erroné.",
+      "username_required": "L'identifiant est obligatoire."
     },
     "abort": {
+      "already_configured": "Ce compte NexBlue est déjà configuré.",
       "single_instance_allowed": "Une seule instance est autorisée."
     }
   },

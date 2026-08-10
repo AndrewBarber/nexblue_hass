@@ -11,9 +11,11 @@
       }
     },
     "error": {
-      "auth": "Brukernavn/Passord er feil."
+      "auth": "Brukernavn/Passord er feil.",
+      "username_required": "Brukernavn er påkrevd."
     },
     "abort": {
+      "already_configured": "Denne NexBlue-kontoen er allerede konfigurert.",
       "single_instance_allowed": "Denne integrasjonen kan kun konfigureres en gang."
     }
   },

@@ -13,9 +13,11 @@
     "error": {
       "auth": "Username/Password is wrong.",
       "cannot_connect": "Failed to connect to NexBlue API. Please check your internet connection and try again.",
+      "username_required": "Username is required.",
       "unknown": "Unexpected error occurred. Please check the logs for more details."
     },
     "abort": {
+      "already_configured": "This NexBlue account is already configured.",
       "single_instance_allowed": "Only a single instance is allowed."
     }
   },
